@@ -1,0 +1,96 @@
+{
+  "branches": ["main"],
+  "plugins": [
+    ["@semantic-release/commit-analyzer", {
+      "preset": "conventionalcommits",
+      "releaseRules": [
+        {"type": "change", "release": "patch"},
+        {"type": "deprecate", "release": "patch"},
+        {"type": "remove", "release": "patch"},
+        {"type": "security", "release": "patch"},
+        {"type": "refactor", "release": "patch"}
+      ],
+      "presetConfig": {
+        "types": [
+          {"type": "feat", "section": "Features"},
+          {"type": "fix", "section": "Bug Fixes"},
+          {"type": "perf", "section": "Performance Improvements"},
+          {"type": "security", "section": "Security Improvements"},
+          {"type": "change", "section": "Changes"},
+          {"type": "revert", "section": "Reverts"},
+          {"type": "remove", "section": "Removals"},
+          {"type": "deprecate", "section": "Deprecations"},
+          {"type": "refactor", "section": "Code Refactoring"},
+          {"type": "docs", "section": "Documentation", "hidden": true},
+          {"type": "style", "section": "Styles", "hidden": true},
+          {"type": "chore", "section": "Miscellaneous Chores", "hidden": true},
+          {"type": "test", "section": "Tests", "hidden": true},
+          {"type": "build", "section": "Build System", "hidden": true},
+          {"type": "ci", "section": "Continuous Integration", "hidden": true}
+        ]
+      }
+    }],
+    ["@semantic-release/release-notes-generator", {
+      "preset": "conventionalcommits",
+      "presetConfig": {
+        "types": [
+          {"type": "feat", "section": "Features"},
+          {"type": "fix", "section": "Bug Fixes"},
+          {"type": "perf", "section": "Performance Improvements"},
+          {"type": "security", "section": "Security Improvements"},
+          {"type": "change", "section": "Changes"},
+          {"type": "revert", "section": "Reverts"},
+          {"type": "remove", "section": "Removals"},
+          {"type": "deprecate", "section": "Deprecations"},
+          {"type": "refactor", "section": "Code Refactoring"},
+          {"type": "docs", "section": "Documentation", "hidden": true},
+          {"type": "style", "section": "Styles", "hidden": true},
+          {"type": "chore", "section": "Miscellaneous Chores", "hidden": true},
+          {"type": "test", "section": "Tests", "hidden": true},
+          {"type": "build", "section": "Build System", "hidden": true},
+          {"type": "ci", "section": "Continuous Integration", "hidden": true}
+        ]
+      }
+    }],
+    "@semantic-release/changelog",
+    ["@semantic-release/github", {
+      "assets": [
+        { "path": "LICENSE" },
+        { "path": "*.md" }
+      ]
+    }],
+    [
+      "@google/semantic-release-replace-plugin", {
+        "replacements": [
+          {
+            "files": ["SignalTrader/SignalTrader.csproj"],
+            "from": "<Version>.*</Version>",
+            "to": "<Version>${nextRelease.version}</Version>",
+            "results": [
+              {
+                "file": "SignalTrader/SignalTrader.csproj",
+                "hasChanged": true,
+                "numMatches": 1,
+                "numReplacements": 1
+              }
+            ],
+            "countMatches": true
+          }
+        ]
+      }
+    ],
+    ["@semantic-release/git", {
+      "assets": [
+        "**/*.csproj",
+        "*.md"
+      ],
+      "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+    }],
+    ["@semantic-release/exec", {
+      "prepareCmd": "docker build -t gambcl/signal_trader ."
+    }],
+    ["@semantic-release-plus/docker", {
+      "name": "gambcl/signal_trader"
+    }]
+  ]
+}

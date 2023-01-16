@@ -1,8 +1,8 @@
-name: Run checks on pushed branches
+name: Release new version
 
 on:
   push:
-    branches-ignore:
+    branches:
       - main
 
 jobs:
@@ -40,3 +40,26 @@ jobs:
       - name: Test
         working-directory: SignalTraderTests
         run: dotnet test "SignalTraderTests.csproj" -c Release
+
+  release:
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          token: ${{ secrets.PAT }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "lts/*"
+
+      - name: Perform semantic release
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        run: npx -p @semantic-release/git -p @semantic-release/changelog -p @semantic-release/exec -p @google/semantic-release-replace-plugin -p @semantic-release-plus/docker -p conventional-changelog-conventionalcommits semantic-release
