@@ -1,0 +1,42 @@
+name: Run checks on pushed branches
+
+on:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Lint commit messages
+        uses: wagoid/commitlint-github-action@v5
+        with:
+          configFile: .commitlintrc.json
+
+      - name: Lint Dockerfile
+        uses: hadolint/hadolint-action@v3.0.0
+        with:
+          dockerfile: Dockerfile
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 6.0.x
+    
+      - name: Restore dependencies
+        working-directory: SignalTrader
+        run: dotnet restore "SignalTrader.csproj"
+    
+      - name: Build
+        working-directory: SignalTrader
+        run: dotnet build "SignalTrader.csproj" -c Release
+    
+      - name: Test
+        working-directory: SignalTraderTests
+        run: dotnet test "SignalTraderTests.csproj" -c Release
