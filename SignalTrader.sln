@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalTrader", "SignalTrader\SignalTrader.csproj", "{5AC35DA6-40A9-4186-90D5-1941666C568D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalTraderTests", "SignalTraderTests\SignalTraderTests.csproj", "{66062E05-57F8-4FC2-87CF-4CC9A0D860F4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5AC35DA6-40A9-4186-90D5-1941666C568D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5AC35DA6-40A9-4186-90D5-1941666C568D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5AC35DA6-40A9-4186-90D5-1941666C568D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5AC35DA6-40A9-4186-90D5-1941666C568D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{66062E05-57F8-4FC2-87CF-4CC9A0D860F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{66062E05-57F8-4FC2-87CF-4CC9A0D860F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{66062E05-57F8-4FC2-87CF-4CC9A0D860F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{66062E05-57F8-4FC2-87CF-4CC9A0D860F4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
