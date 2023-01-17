@@ -31,7 +31,7 @@ public class PingController : ControllerBase
         _logger.LogInformation("Received {Path} request from {IPAddress}", Request.Path, Request.HttpContext.Connection.RemoteIpAddress!.ToString() ?? "<unknown>");
         var serverTime = DateTime.UtcNow.ToString("O");
         var version = Assembly.GetEntryAssembly()!.GetName().Version!.ToString() ?? string.Empty;
-        return Ok(new PingResponseResource(serverTime, version));
+        return Ok(new PingResource(serverTime, version));
     }
 
     #endregion
