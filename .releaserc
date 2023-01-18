@@ -87,10 +87,10 @@
       "message": "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
     }],
     ["@semantic-release/exec", {
-      "prepareCmd": "docker build -t gambcl/signal_trader ."
+      "prepareCmd": "docker build -t gambcl/signaltrader ."
     }],
     ["@semantic-release-plus/docker", {
-      "name": "gambcl/signal_trader"
+      "name": "gambcl/signaltrader"
     }]
   ]
 }
