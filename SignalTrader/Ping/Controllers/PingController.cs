@@ -1,9 +1,11 @@
 using System.Reflection;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SignalTrader.Signals.Resources;
 
 namespace SignalTrader.Ping.Controllers;
 
+[AllowAnonymous]
 [ApiController]
 public class PingController : ControllerBase
 {
