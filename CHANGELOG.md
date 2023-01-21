@@ -1,3 +1,11 @@
+## [0.2.1](https://github.com/gambcl/SignalTrader/compare/v0.2.0...v0.2.1) (2023-01-21)
+
+
+### Bug Fixes
+
+* change default postgres host ([78daecb](https://github.com/gambcl/SignalTrader/commit/78daecbb615d82c1ba86011ff71fb73ec45fb528))
+* expose port 8000 in dockerfile ([3d73a5c](https://github.com/gambcl/SignalTrader/commit/3d73a5ca9c22fbc0925c5b07659753d766c9469c))
+
 ## [0.2.0](https://github.com/gambcl/SignalTrader/compare/v0.1.0...v0.2.0) (2023-01-21)
 
 
