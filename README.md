@@ -1,3 +1,8 @@
+# SignalTrader
+
+[![Coverage Status](https://coveralls.io/repos/github/gambcl/SignalTrader/badge.svg?branch=main)](https://coveralls.io/github/gambcl/SignalTrader?branch=main)
+
+
 ## Overview
 
 SignalTrader is a web API for automated trading based on TradingView alert webhooks.

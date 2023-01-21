@@ -10,9 +10,7 @@
 .releaserc
 bin/
 obj/
-appsettings.Development.json
-appsettings.Staging.json
-appsettings.Production.json
+appsettings.Local.json
 docker-compose.yml
 LICENSE
 README.md

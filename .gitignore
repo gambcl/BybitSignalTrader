@@ -1,6 +1,4 @@
-appsettings.Development.json
-appsettings.Staging.json
-appsettings.Production.json
+appsettings.Local.json
 
 
 ## Ignore Visual Studio temporary files, build results, and

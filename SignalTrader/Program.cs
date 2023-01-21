@@ -1,84 +1,181 @@
 using System.Reflection;
-using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
-using SignalTrader.Signals.Services;
-using SignalTrader.Telegram.Services;
-using SignalTrader.Telegram.Workers;
+using SignalTrader.Common.Docker;
+using SignalTrader.Data;
 
-const string consoleOutputTemplate = "{Timestamp:HH:mm:ss} <{ThreadId}> {Level:u3} {Message:lj}{NewLine}{Exception}";
+namespace SignalTrader;
 
-Log.Logger = new LoggerConfiguration()
-    .Enrich.FromLogContext()
-    .Enrich.WithThreadId()
-    .WriteTo.Console(outputTemplate:consoleOutputTemplate)
-    .CreateBootstrapLogger();
-
-try
+public class Program
 {
-    var appName = Assembly.GetEntryAssembly()!.GetName().Name;
-    var appVersion = Assembly.GetEntryAssembly()!.GetName().Version;
-    Log.Information($"{appName} v{appVersion!.ToString()} starting");
+    private const string ConsoleOutputTemplate = "{Timestamp:HH:mm:ss} <{ThreadId}> {Level:u3} {Message:lj}{NewLine}{Exception}";
     
-    Log.Information("Starting web application");
-    var builder = WebApplication.CreateBuilder(args);
-
-    // Resolve paths for data, logs, reports.
-    var homePath = builder.Configuration["SignalTraderHome"];
-    var dataPath = Path.Combine(homePath, "data");
-    if (!Directory.Exists(dataPath))
+    public static int Main(string[] args)
     {
-        Directory.CreateDirectory(dataPath);
+        try
+        {
+            // Bootstrap some Configuration so we can resolve paths.
+            IConfiguration configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .AddCommandLine(args)
+                .AddInMemoryCollection(GetApplicationProperties())
+                .Build();
+            ResolvePaths(configuration);
+            
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(configuration)
+                .Enrich.FromLogContext()
+                .Enrich.WithThreadId()
+                .WriteTo.Console(outputTemplate:ConsoleOutputTemplate)
+                .CreateBootstrapLogger();
+
+            var appName = configuration["ApplicationProduct"];
+            var appVersion = configuration["ApplicationVersion"];
+            Log.Information($"{appName} v{appVersion} starting");
+            
+            Log.Information("Starting web host");
+            var host = CreateHostBuilder(args).Build();
+            RunDbMigrations(host);
+            host.Run();
+            return 0;
+        }
+        catch (Exception ex)
+        {
+            Log.Fatal(ex, "Application terminated unexpectedly");
+            return 1;
+        }
+        finally
+        {
+            Log.CloseAndFlush();
+        }
     }
-    var logsPath = Path.Combine(homePath, "logs");
-    if (!Directory.Exists(logsPath))
+
+    public static IHostBuilder CreateHostBuilder(string[] args) =>
+        Host.CreateDefaultBuilder(args)
+            .ConfigureAppConfiguration((hostingContext, config) =>
+            {
+                config.SetBasePath(Directory.GetCurrentDirectory());
+                config.Sources.Clear();
+                config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                config.AddJsonFile($"appsettings.{hostingContext.HostingEnvironment.EnvironmentName}.json", optional: false, reloadOnChange: true);
+                config.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: true);
+                config.AddDockerSecrets();
+                if (hostingContext.HostingEnvironment.IsDevelopment())
+                {
+                    config.AddUserSecrets<Startup>();
+                }
+                config.AddEnvironmentVariables();
+                config.AddCommandLine(args);
+                config.AddInMemoryCollection(GetApplicationProperties());
+            })
+            .UseSerilog((hostingContext, services, loggerConfiguration) =>
+            {
+                loggerConfiguration
+                    .ReadFrom.Configuration(hostingContext.Configuration)
+                    .ReadFrom.Services(services)
+                    .Enrich.FromLogContext()
+                    .Enrich.WithThreadId()
+                    .WriteTo.Console(outputTemplate: ConsoleOutputTemplate);
+            }) 
+            .ConfigureWebHostDefaults(webBuilder =>
+            {
+                webBuilder.ConfigureKestrel((context, options) =>
+                {
+                    var port = context.Configuration.GetValue<Int32>("Server:Port");
+                    options.ListenAnyIP(port);
+                });
+                webBuilder.UseStartup<Startup>();
+            });
+
+    #region Private
+
+    /// <summary>
+    /// Retrieves various application properties, such as name, version.
+    /// </summary>
+    /// <returns>Dictionary containing application properties.</returns>
+    /// <exception cref="ApplicationException">Failed to read a required application property.</exception>
+    private static IDictionary<string, string> GetApplicationProperties()
     {
-        Directory.CreateDirectory(logsPath);
+        IDictionary<string, string> result = new Dictionary<string, string>();
+
+        string? product = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyProductAttribute>()?.Product;
+        if (string.IsNullOrEmpty(product))
+        {
+            throw new ApplicationException("Failed to read AssemblyProductAttribute");
+        }
+        result["ApplicationProduct"] = product ?? String.Empty;
+
+        string? version = Assembly.GetEntryAssembly()?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+        if (string.IsNullOrEmpty(version))
+        {
+            throw new ApplicationException("Failed to read AssemblyInformationalVersionAttribute");
+        }
+        result["ApplicationVersion"] = version ?? String.Empty;
+            
+        return result;
     }
-    var reportsPath = Path.Combine(homePath, "reports");
-    if (!Directory.Exists(reportsPath))
+
+    private static void ResolvePaths(IConfiguration configuration)
     {
-        Directory.CreateDirectory(reportsPath);
+        // Resolve paths for data, logs, reports.
+        var homePath = configuration["SignalTraderHome"];
+        if (string.IsNullOrWhiteSpace(homePath))
+        {
+            throw new ApplicationException("Undefined configuration value SignalTraderHome");
+        }
+        
+        var keysPath = Path.Combine(homePath, "keys");
+        if (!Directory.Exists(keysPath))
+        {
+            Directory.CreateDirectory(keysPath);
+        }
+        var logsPath = Path.Combine(homePath, "logs");
+        if (!Directory.Exists(logsPath))
+        {
+            Directory.CreateDirectory(logsPath);
+        }
+        var reportsPath = Path.Combine(homePath, "reports");
+        if (!Directory.Exists(reportsPath))
+        {
+            Directory.CreateDirectory(reportsPath);
+        }
+        Environment.SetEnvironmentVariable("SignalTraderHome", homePath);
     }
-    Environment.SetEnvironmentVariable("SignalTraderHome", homePath);
 
-    // Configure logging using Serilog.
-    builder.Host.UseSerilog((context, services, configuration) => configuration
-        .ReadFrom.Configuration(context.Configuration)
-        .ReadFrom.Services(services)
-        .Enrich.FromLogContext()
-        .Enrich.WithThreadId()
-        .WriteTo.Console(outputTemplate:consoleOutputTemplate));
-
-    // Configure JSON serialization.
-    builder.Services.Configure<JsonOptions>(options =>
+    private static void RunDbMigrations(IHost host)
     {
-        // Serialize enums as strings.
-        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    });
+        using (var scope = host.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
 
-    // Add services to the container.
-    builder.Services.AddScoped<ISignalsService, SignalsService>();
-    builder.Services.AddSingleton<ITelegramService, TelegramService>();
-    builder.Services.AddHostedService<TelegramWorker>();
+            try
+            {
+                var context = services.GetRequiredService<SignalTraderDbContext>();
+                    
+                // Run migrations.
+                context.Database.Migrate();
 
-    builder.Services.AddControllers();
+                // Seed data.
+                EnsureSeedData(context);
+            }
+            catch (Exception ex)
+            {
+                System.Console.Error.WriteLine($"An error occurred running DB migrations: {ex.Message}");
+            }
+        }
+    }
+        
+    /// <summary>
+    /// Insert seed data into database.
+    /// NOTE: This method should be re-runnable, to allow for new defaults to be added in the future without
+    /// destroying existing values.
+    /// </summary>
+    private static void EnsureSeedData(SignalTraderDbContext context)
+    {
+    }
 
-    var app = builder.Build();
-
-    app.UseSerilogRequestLogging();
-
-    app.UseAuthorization();
-
-    app.MapControllers();
-
-    app.Run();
-}
-catch (Exception ex)
-{
-    Log.Fatal(ex, "Application terminated unexpectedly");
-}
-finally
-{
-    Log.CloseAndFlush();
+    #endregion
 }

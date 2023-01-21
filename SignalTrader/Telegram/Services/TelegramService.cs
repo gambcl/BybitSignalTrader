@@ -1,4 +1,6 @@
 using System.Reflection;
+using SignalTrader.Accounts.Services;
+using SignalTrader.Telegram.Extensions;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
 using Telegram.Bot.Polling;
@@ -13,6 +15,7 @@ public class TelegramService : ITelegramService, IDisposable
 
     private readonly ILogger<TelegramService> _logger;
     private readonly IConfiguration _configuration;
+    private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly CancellationTokenSource _cancellationTokenSource = new ();
     private readonly ITelegramBotClient? _telegramBotClient = null;
     private readonly long _chatId;
@@ -21,10 +24,11 @@ public class TelegramService : ITelegramService, IDisposable
 
     #region Constructors
 
-    public TelegramService(ILogger<TelegramService> logger, IConfiguration configuration)
+    public TelegramService(ILogger<TelegramService> logger, IConfiguration configuration, IServiceScopeFactory serviceScopeFactory)
     {
         _logger = logger;
         _configuration = configuration;
+        _serviceScopeFactory = serviceScopeFactory;
 
         var botToken = _configuration["Notifications:Telegram:BotToken"];
         if (!string.IsNullOrWhiteSpace(botToken) && long.TryParse(_configuration["Notifications:Telegram:ChatId"], out _chatId))
@@ -116,9 +120,6 @@ public class TelegramService : ITelegramService, IDisposable
                         case "/balances":
                             await HandleBalancesCommand(botClient, update, cancellationToken);
                             break;
-                        case "/bots":
-                            await HandleBotsCommand(botClient, update, cancellationToken);
-                            break;
                     }
                 }
             }
@@ -146,23 +147,50 @@ public class TelegramService : ITelegramService, IDisposable
     {
         var message = "The following commands are supported:\n" +
                       "/help \\- Show this message\n" +
-                      "/balances \\- Show account balances\n" +
-                      "/bots \\- Show bots\n";
+                      "/balances \\- Show account balances\n";
         await _telegramBotClient!.SendTextMessageAsync(_chatId, message, ParseMode.MarkdownV2);
     }
 
     private async Task HandleBalancesCommand(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
-        // TODO: Show account balances
-        var message = "TODO: Show account balances\n";
-        await _telegramBotClient!.SendTextMessageAsync(_chatId, message, ParseMode.MarkdownV2);
-    }
-
-    private async Task HandleBotsCommand(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
-    {
-        // TODO: Show bots
-        var message = "TODO: Show bots\n";
-        await _telegramBotClient!.SendTextMessageAsync(_chatId, message, ParseMode.MarkdownV2);
+        using (var scope = _serviceScopeFactory.CreateAsyncScope())
+        {
+            var accountsService = scope.ServiceProvider.GetRequiredService<IAccountsService>();
+            var message = string.Empty;
+            var accounts = await accountsService.GetAccountsAsync();
+            if (accounts.Count > 0)
+            {
+                foreach (var account in accounts)
+                {
+                    message += $"\U0001F4B0 *{account.Name.ToTelegramSafeString()}*\n";
+                    var balances = accountsService.GetBalances(account.Id);
+                    var balancesShown = false;
+                    foreach (var kv in balances)
+                    {
+                        if (kv.Value.WalletBalance > 0 || kv.Value.AvailableBalance > 0)
+                        {
+                            message += $"_{kv.Value.Asset.ToTelegramSafeString()}:_\n";
+                            message += "```\n";
+                            message += $"Available: {kv.Value.AvailableBalance}\n".ToTelegramSafeString();
+                            message += $"Wallet:    {kv.Value.WalletBalance}\n".ToTelegramSafeString();
+                            message += "```\n";
+                            balancesShown = true;
+                        }
+                    }
+                    if (!balancesShown)
+                    {
+                        message += "No balances found!\n".ToTelegramSafeString();
+                    }
+                    message += "\n";
+                }
+            }
+            else
+            {
+                message = "No accounts found!\n".ToTelegramSafeString();
+            }
+        
+            await _telegramBotClient!.SendTextMessageAsync(_chatId, message, ParseMode.MarkdownV2);
+        }
     }
 
     #endregion

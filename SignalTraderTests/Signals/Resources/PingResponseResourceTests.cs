@@ -12,7 +12,7 @@ public class PingResponseResourceTests
         const string expectedServerVersion = "0.0.0.0";
 
         // Act
-        var sut = new PingResponseResource(expectedServerTime, expectedServerVersion);
+        var sut = new PingResource(expectedServerTime, expectedServerVersion);
 
         // Assert
         Assert.NotNull(sut);
