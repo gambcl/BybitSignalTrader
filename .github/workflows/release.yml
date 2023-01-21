@@ -39,7 +39,13 @@ jobs:
     
       - name: Test
         working-directory: SignalTraderTests
-        run: dotnet test "SignalTraderTests.csproj" -c Release
+        run: dotnet test "SignalTraderTests.csproj" -c Release /p:CollectCoverage=true /p:CoverletOutput=TestResults/ /p:CoverletOutputFormat=lcov
+
+      - name: Publish coverage report to coveralls.io   
+        uses: coverallsapp/github-action@master   
+        with:
+          github-token: ${{ secrets.PAT }} 
+          path-to-lcov: SignalTraderTests/TestResults/coverage.info 
 
   release:
     needs: checks
