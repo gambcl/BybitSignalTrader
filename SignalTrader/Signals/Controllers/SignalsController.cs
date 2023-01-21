@@ -102,7 +102,7 @@ public class SignalsController : ControllerBase
         catch (ArgumentException ae)
         {
             _logger.LogError(ae, "Caught ArgumentException in TradingViewSignalAsync");
-            return StatusCode(StatusCodes.Status400BadRequest, new ErrorResource(ae.Message));
+            return BadRequest(new ErrorResource(ae.Message));
         }
         catch (Exception e)
         {

@@ -2,10 +2,14 @@ using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using SignalTrader.Accounts.Services;
 using SignalTrader.Authentication.Services;
+using SignalTrader.Data;
 using SignalTrader.Signals.Services;
 using SignalTrader.Telegram.Services;
 using SignalTrader.Telegram.Workers;
@@ -32,6 +36,21 @@ public class Startup
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
+        // Create the keyring directory if one doesn't exist.
+        var keyRingDirectory = Path.Combine(Environment.ExpandEnvironmentVariables("%SignalTraderHome%"), "keys", "data-protection");
+        Directory.CreateDirectory(keyRingDirectory);
+        // Configure DataProtection.
+        services.AddDataProtection()
+            .SetApplicationName(Configuration["ApplicationProduct"])
+            .PersistKeysToFileSystem(new DirectoryInfo(keyRingDirectory));
+
+        // Configure EF Core.
+        services.AddDbContext<SignalTraderDbContext>(options =>
+        {
+            options.UseNpgsql(BuildPostgreSqlConnectionString(), builder =>
+                builder.MigrationsHistoryTable("__EFMigrationsHistory", SignalTraderDbContext.DefaultSchema));
+        });
+        
         // Configure authentication (using JWT).
         services.AddAuthentication(options =>
         {
@@ -82,6 +101,7 @@ public class Startup
         // Configure scoped services.
         services.AddScoped<ISignalsService, SignalsService>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
+        services.AddScoped<IAccountsService, AccountsService>();
 
         // Configure singleton services.
         services.AddSingleton<ITelegramService, TelegramService>();
@@ -113,4 +133,19 @@ public class Startup
             endpoints.MapControllers();
         });
     }
+    
+    #region Private
+
+    private string BuildPostgreSqlConnectionString()
+    {
+        var host = Configuration["Database:PostgreSQL:Host"];
+        var port = Configuration["Database:PostgreSQL:Port"];
+        var database = Configuration["Database:PostgreSQL:Database"];
+        var user = Configuration["Database:PostgreSQL:User"];
+        var password = Configuration["Database:PostgreSQL:Password"];
+        var result = $"Host={host};Port={port};Database={database};Username={user};Password={password}";
+        return result;
+    }
+        
+    #endregion
 }

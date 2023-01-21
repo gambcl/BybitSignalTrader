@@ -1,6 +1,8 @@
 using System.Reflection;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using SignalTrader.Common.Docker;
+using SignalTrader.Data;
 
 namespace SignalTrader;
 
@@ -35,7 +37,9 @@ public class Program
             Log.Information($"{appName} v{appVersion} starting");
             
             Log.Information("Starting web host");
-            CreateHostBuilder(args).Build().Run();
+            var host = CreateHostBuilder(args).Build();
+            RunDbMigrations(host);
+            host.Run();
             return 0;
         }
         catch (Exception ex)
@@ -123,10 +127,10 @@ public class Program
             throw new ApplicationException("Undefined configuration value SignalTraderHome");
         }
         
-        var dataPath = Path.Combine(homePath, "data");
-        if (!Directory.Exists(dataPath))
+        var keysPath = Path.Combine(homePath, "keys");
+        if (!Directory.Exists(keysPath))
         {
-            Directory.CreateDirectory(dataPath);
+            Directory.CreateDirectory(keysPath);
         }
         var logsPath = Path.Combine(homePath, "logs");
         if (!Directory.Exists(logsPath))
@@ -139,6 +143,38 @@ public class Program
             Directory.CreateDirectory(reportsPath);
         }
         Environment.SetEnvironmentVariable("SignalTraderHome", homePath);
+    }
+
+    private static void RunDbMigrations(IHost host)
+    {
+        using (var scope = host.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+
+            try
+            {
+                var context = services.GetRequiredService<SignalTraderDbContext>();
+                    
+                // Run migrations.
+                context.Database.Migrate();
+
+                // Seed data.
+                EnsureSeedData(context);
+            }
+            catch (Exception ex)
+            {
+                System.Console.Error.WriteLine($"An error occurred running DB migrations: {ex.Message}");
+            }
+        }
+    }
+        
+    /// <summary>
+    /// Insert seed data into database.
+    /// NOTE: This method should be re-runnable, to allow for new defaults to be added in the future without
+    /// destroying existing values.
+    /// </summary>
+    private static void EnsureSeedData(SignalTraderDbContext context)
+    {
     }
 
     #endregion
