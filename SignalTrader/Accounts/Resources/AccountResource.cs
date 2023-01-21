@@ -13,4 +13,5 @@ public class AccountResource
     public string? ApiKey { get; set; }
     public long? CreatedUtcMillis { get; set; }
     public long? UpdatedUtcMillis { get; set; }
+    public Dictionary<string, AccountWalletBalanceResource>? Balances { get; set; }
 }

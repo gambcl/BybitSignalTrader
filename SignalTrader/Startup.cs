@@ -8,8 +8,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using SignalTrader.Accounts.Services;
+using SignalTrader.Accounts.Workers;
 using SignalTrader.Authentication.Services;
 using SignalTrader.Data;
+using SignalTrader.Exchanges;
+using SignalTrader.Exchanges.Bybit;
 using SignalTrader.Signals.Services;
 using SignalTrader.Telegram.Services;
 using SignalTrader.Telegram.Workers;
@@ -102,12 +105,15 @@ public class Startup
         services.AddScoped<ISignalsService, SignalsService>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<IAccountsService, AccountsService>();
+        services.AddScoped<IExchangeProvider, ExchangeProvider>();
+        services.AddScoped<IBybitUsdtPerpetualExchange, BybitUsdtPerpetualExchange>();
 
         // Configure singleton services.
         services.AddSingleton<ITelegramService, TelegramService>();
 
         // Configure background workers (effectively singletons).
         services.AddHostedService<TelegramWorker>();
+        services.AddHostedService<AccountsWorker>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

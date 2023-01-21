@@ -55,12 +55,31 @@ public class AccountsController : ControllerBase
 
     [HttpGet]
     [Produces("application/json")]
-    public async Task<IActionResult> GetAccountsAsync()
+    public async Task<IActionResult> GetAccountsAsync(bool includeBalances = false)
     {
         try
         {
             var accounts = await _accountsService.GetAccountsAsync();
-            var result = accounts.Select(account => account.ToAccountResource());
+            var result = accounts.Select(account => account.ToAccountResource()).ToList();
+            if (includeBalances)
+            {
+                foreach (var accountResource in result)
+                {
+                    // Fetch balances and add to resource.
+                    var balances = _accountsService.GetBalances(accountResource.Id);
+                    Dictionary<string, AccountWalletBalanceResource> balancesResources = new();
+                    foreach (var kv in balances)
+                    {
+                        balancesResources[kv.Key] = new AccountWalletBalanceResource
+                        {
+                            Asset = kv.Value.Asset,
+                            WalletAmount = kv.Value.WalletBalance,
+                            AvailableAmount = kv.Value.AvailableBalance,
+                        };
+                    }
+                    accountResource.Balances = balancesResources;
+                }
+            }
             return Ok(result);
         }
         catch (ArgumentException ae)
@@ -77,7 +96,7 @@ public class AccountsController : ControllerBase
 
     [HttpGet("{id}")]
     [Produces("application/json")]
-    public async Task<IActionResult> GetAccountAsync(int id)
+    public async Task<IActionResult> GetAccountAsync(int id, bool includeBalances = false)
     {
         try
         {
@@ -85,6 +104,22 @@ public class AccountsController : ControllerBase
             if (account != null)
             {
                 var result = account.ToAccountResource();
+                if (includeBalances)
+                {
+                    // Fetch balances and add to resource.
+                    var balances = _accountsService.GetBalances(id);
+                    Dictionary<string, AccountWalletBalanceResource> balancesResources = new();
+                    foreach (var kv in balances)
+                    {
+                        balancesResources[kv.Key] = new AccountWalletBalanceResource
+                        {
+                            Asset = kv.Value.Asset,
+                            WalletAmount = kv.Value.WalletBalance,
+                            AvailableAmount = kv.Value.AvailableBalance,
+                        };
+                    }
+                    result.Balances = balancesResources;
+                }
                 return Ok(result);
             }
 
