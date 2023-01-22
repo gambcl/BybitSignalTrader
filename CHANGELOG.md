@@ -1,3 +1,10 @@
+## [0.2.2](https://github.com/gambcl/SignalTrader/compare/v0.2.1...v0.2.2) (2023-01-22)
+
+
+### Bug Fixes
+
+* signals controller should accept plain text body ([8974840](https://github.com/gambcl/SignalTrader/commit/8974840c6a44c5e060e8dd0d8d5b3de55f7beca4))
+
 ## [0.2.1](https://github.com/gambcl/SignalTrader/compare/v0.2.0...v0.2.1) (2023-01-21)
 
 
