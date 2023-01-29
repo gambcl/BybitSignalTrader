@@ -1,3 +1,4 @@
+using Antlr4.Runtime.Tree;
 using SignalTrader.Signals.Services;
 using SignalTrader.Signals.SignalScript.Exceptions;
 using SignalTrader.Signals.SignalScript.Generated;
@@ -30,6 +31,17 @@ public class ValidationVisitor : SignalScriptBaseVisitor<Task<ValueWrapper?>>
     #endregion
 
     #region Visitor
+
+    public override async Task<ValueWrapper?> VisitChildren(IRuleNode node)
+    {
+        for (int i = 0; i < node.ChildCount; i++)
+        {
+            var child = node.GetChild(i);
+            await Visit(child);
+        }
+
+        return null;
+    }
 
     protected override Task<ValueWrapper?> DefaultResult => Task.FromResult(default(ValueWrapper?));
 
@@ -315,7 +327,7 @@ public class ValidationVisitor : SignalScriptBaseVisitor<Task<ValueWrapper?>>
     {
         AllowedSymbol[] requiredSymbols =
         {
-            new(Constants.AccountFunction.ParameterNames.AccountId, new [] { ValueWrapper.ValueType.String })
+            new(Constants.AccountFunction.ParameterNames.AccountId, new [] { ValueWrapper.ValueType.Int })
         };
 
         foreach (var requiredSymbol in requiredSymbols)
@@ -368,7 +380,7 @@ public class ValidationVisitor : SignalScriptBaseVisitor<Task<ValueWrapper?>>
             {
                 requiredSymbols = new AllowedSymbol[]{};
                 optionalSymbols = new AllowedSymbol[]{
-                    new(Constants.CancelOrdersFunction.ParameterNames.AccountId, new [] { ValueWrapper.ValueType.String }),
+                    new(Constants.CancelOrdersFunction.ParameterNames.AccountId, new [] { ValueWrapper.ValueType.Int }),
                     new(Constants.CancelOrdersFunction.ParameterNames.BaseAsset, new [] { ValueWrapper.ValueType.String }),
                     new(Constants.CancelOrdersFunction.ParameterNames.QuoteAsset, new [] { ValueWrapper.ValueType.String }),
                     new(Constants.CancelOrdersFunction.ParameterNames.Side, new [] { ValueWrapper.ValueType.Side })
@@ -383,7 +395,7 @@ public class ValidationVisitor : SignalScriptBaseVisitor<Task<ValueWrapper?>>
                     new(Constants.ClosePositionFunction.ParameterNames.Order, new [] { ValueWrapper.ValueType.Order })
                 };
                 optionalSymbols = new AllowedSymbol[]{
-                    new(Constants.ClosePositionFunction.ParameterNames.AccountId, new [] { ValueWrapper.ValueType.String }),
+                    new(Constants.ClosePositionFunction.ParameterNames.AccountId, new [] { ValueWrapper.ValueType.Int }),
                     new(Constants.ClosePositionFunction.ParameterNames.BaseAsset, new [] { ValueWrapper.ValueType.String }),
                     new(Constants.ClosePositionFunction.ParameterNames.QuoteAsset, new [] { ValueWrapper.ValueType.String }),
                     new(Constants.ClosePositionFunction.ParameterNames.Price, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Price }),
@@ -415,7 +427,7 @@ public class ValidationVisitor : SignalScriptBaseVisitor<Task<ValueWrapper?>>
                     new(Constants.OpenPositionFunction.ParameterNames.Order, new [] { ValueWrapper.ValueType.Order })
                 };
                 optionalSymbols = new AllowedSymbol[]{
-                    new(Constants.OpenPositionFunction.ParameterNames.AccountId, new [] { ValueWrapper.ValueType.String }),
+                    new(Constants.OpenPositionFunction.ParameterNames.AccountId, new [] { ValueWrapper.ValueType.Int }),
                     new(Constants.OpenPositionFunction.ParameterNames.BaseAsset, new [] { ValueWrapper.ValueType.String }),
                     new(Constants.OpenPositionFunction.ParameterNames.QuoteAsset, new [] { ValueWrapper.ValueType.String }),
                     new(Constants.OpenPositionFunction.ParameterNames.Leverage, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Int }),
