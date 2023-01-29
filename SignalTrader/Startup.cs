@@ -1,5 +1,7 @@
 using System.Text;
 using System.Text.Json.Serialization;
+using System.Threading.Channels;
+using Antlr4.Runtime.Tree;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -14,6 +16,7 @@ using SignalTrader.Data;
 using SignalTrader.Exchanges;
 using SignalTrader.Exchanges.Bybit;
 using SignalTrader.Signals.Services;
+using SignalTrader.Signals.Workers;
 using SignalTrader.Telegram.Services;
 using SignalTrader.Telegram.Workers;
 
@@ -103,6 +106,7 @@ public class Startup
         
         // Configure scoped services.
         services.AddScoped<ISignalsService, SignalsService>();
+        services.AddScoped<ISignalScriptService, SignalScriptService>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<IAccountsService, AccountsService>();
         services.AddScoped<IExchangeProvider, ExchangeProvider>();
@@ -110,10 +114,14 @@ public class Startup
 
         // Configure singleton services.
         services.AddSingleton<ITelegramService, TelegramService>();
+        services.AddSingleton<Channel<IParseTree>>(Channel.CreateUnbounded<IParseTree>());
+        services.AddSingleton<ChannelWriter<IParseTree>>(svc => svc.GetRequiredService<Channel<IParseTree>>().Writer);
+        services.AddSingleton<ChannelReader<IParseTree>>(svc => svc.GetRequiredService<Channel<IParseTree>>().Reader);
 
         // Configure background workers (effectively singletons).
         services.AddHostedService<TelegramWorker>();
         services.AddHostedService<AccountsWorker>();
+        services.AddHostedService<SignalScriptWorker>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

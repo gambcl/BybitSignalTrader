@@ -30,7 +30,7 @@ public class TelegramWorker : IHostedService
         _telegramService.StartBot();
 
         // Send startup message.
-        await _telegramService.SendStartupNotificationAsync();
+        await _telegramService.SendStartupNotificationAsync(Constants.Emojis.TrafficLight);
     }
 
     public Task StopAsync(CancellationToken cancellationToken)

@@ -17,7 +17,7 @@ public class TelegramService : ITelegramService, IDisposable
     private readonly IConfiguration _configuration;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly CancellationTokenSource _cancellationTokenSource = new ();
-    private readonly ITelegramBotClient? _telegramBotClient = null;
+    private readonly ITelegramBotClient? _telegramBotClient;
     private readonly long _chatId;
 
     #endregion
@@ -30,8 +30,8 @@ public class TelegramService : ITelegramService, IDisposable
         _configuration = configuration;
         _serviceScopeFactory = serviceScopeFactory;
 
-        var botToken = _configuration["Notifications:Telegram:BotToken"];
-        if (!string.IsNullOrWhiteSpace(botToken) && long.TryParse(_configuration["Notifications:Telegram:ChatId"], out _chatId))
+        var botToken = _configuration["User:Notifications:Telegram:BotToken"];
+        if (!string.IsNullOrWhiteSpace(botToken) && long.TryParse(_configuration["User:Notifications:Telegram:ChatId"], out _chatId))
         {
             _telegramBotClient = new TelegramBotClient(botToken);
         }
@@ -69,21 +69,48 @@ public class TelegramService : ITelegramService, IDisposable
         }
     }
 
-    public async Task SendMessageNotificationAsync(string message)
+    public async Task SendMessageNotificationAsync(string message, string? emoji = null)
     {
         if (_telegramBotClient != null)
         {
-            await _telegramBotClient.SendTextMessageAsync(_chatId, message, ParseMode.MarkdownV2);
+            emoji = string.IsNullOrWhiteSpace(emoji) ? string.Empty : emoji + " ";
+            await _telegramBotClient.SendTextMessageAsync(_chatId, emoji + message.ToTelegramSafeString(), ParseMode.MarkdownV2);
         }
     }
 
-    public async Task SendStartupNotificationAsync()
+    public async Task SendStartupNotificationAsync(string? emoji = null)
     {
         if (_telegramBotClient != null)
         {
             var appName = Assembly.GetEntryAssembly()!.GetName().Name;
             var appVersion = Assembly.GetEntryAssembly()!.GetName().Version;
-            await _telegramBotClient.SendTextMessageAsync(_chatId, $"*{appName} v{appVersion!.Major}\\.{appVersion!.Minor}\\.{appVersion.Build}* started", ParseMode.MarkdownV2);
+
+            emoji = string.IsNullOrWhiteSpace(emoji) ? string.Empty : emoji + " ";
+            await _telegramBotClient.SendTextMessageAsync(_chatId, emoji + $"*{appName} v{appVersion!.Major}\\.{appVersion.Minor}\\.{appVersion.Build}* started", ParseMode.MarkdownV2);
+        }
+    }
+
+    public async Task SendErrorNotificationAsync(string message, string? detail, string? emoji = null)
+    {
+        if (_telegramBotClient != null)
+        {
+            string detailStyled = String.Empty;
+            if (!string.IsNullOrWhiteSpace(detail))
+            {
+                detailStyled = $":\n_{detail.ToTelegramSafeString()}_";
+            }
+
+            emoji = string.IsNullOrWhiteSpace(emoji) ? string.Empty : emoji + " ";
+            await _telegramBotClient.SendTextMessageAsync(_chatId, emoji + message.ToTelegramSafeString() + detailStyled, ParseMode.MarkdownV2);
+        }
+    }
+
+    public async Task SendSignalReceivedNotificationAsync(string strategyName, string signalName, string exchange, string ticker, string interval, string? emoji = null)
+    {
+        if (_telegramBotClient != null)
+        {
+            emoji = string.IsNullOrWhiteSpace(emoji) ? string.Empty : emoji + " ";
+            await _telegramBotClient.SendTextMessageAsync(_chatId, emoji + $"Received *{strategyName.ToTelegramSafeString()} '{signalName.ToTelegramSafeString()}'* signal for *{exchange.ToTelegramSafeString()}:{ticker.ToTelegramSafeString()} {interval.ToTelegramSafeString()}*", ParseMode.MarkdownV2);
         }
     }
 
@@ -146,14 +173,14 @@ public class TelegramService : ITelegramService, IDisposable
     private async Task HandleHelpCommand(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
         var message = "The following commands are supported:\n" +
-                      "/help \\- Show this message\n" +
-                      "/balances \\- Show account balances\n";
-        await _telegramBotClient!.SendTextMessageAsync(_chatId, message, ParseMode.MarkdownV2);
+                      "/help - Show this message\n" +
+                      "/balances - Show account balances\n";
+        await botClient.SendTextMessageAsync(_chatId, message.ToTelegramSafeString(), ParseMode.MarkdownV2, cancellationToken:cancellationToken);
     }
 
     private async Task HandleBalancesCommand(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
-        using (var scope = _serviceScopeFactory.CreateAsyncScope())
+        await using (var scope = _serviceScopeFactory.CreateAsyncScope())
         {
             var accountsService = scope.ServiceProvider.GetRequiredService<IAccountsService>();
             var message = string.Empty;
@@ -162,7 +189,7 @@ public class TelegramService : ITelegramService, IDisposable
             {
                 foreach (var account in accounts)
                 {
-                    message += $"\U0001F4B0 *{account.Name.ToTelegramSafeString()}*\n";
+                    message += $"{Constants.Emojis.MoneyBag} *{account.Name.ToTelegramSafeString()}*\n";
                     var balances = accountsService.GetBalances(account.Id);
                     var balancesShown = false;
                     foreach (var kv in balances)
@@ -189,7 +216,7 @@ public class TelegramService : ITelegramService, IDisposable
                 message = "No accounts found!\n".ToTelegramSafeString();
             }
         
-            await _telegramBotClient!.SendTextMessageAsync(_chatId, message, ParseMode.MarkdownV2);
+            await botClient.SendTextMessageAsync(_chatId, message, ParseMode.MarkdownV2, cancellationToken:cancellationToken);
         }
     }
 

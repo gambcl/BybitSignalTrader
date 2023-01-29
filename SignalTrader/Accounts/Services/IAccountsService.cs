@@ -8,6 +8,7 @@ public interface IAccountsService
 {
     public Task<Account> CreateAccountAsync(CreateAccountResource resource);
     public Task<List<Account>> GetAccountsAsync();
+    public List<Account> GetAccounts();
     public Task<Account?> GetAccountAsync(long accountId);
     public Task<Account> UpdateAccountAsync(UpdateAccountResource resource);
     public Task<bool> DeleteAccountAsync(long accountId);
