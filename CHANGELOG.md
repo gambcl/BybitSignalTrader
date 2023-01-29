@@ -36,3 +36,6 @@
 ### Features
 
 * create webapi project ([d8d054c](https://github.com/gambcl/SignalTrader/commit/d8d054c8ab2f4fcf2f7cdccbd42d095ea1811a79))
+* configure logging
+* handle tradingview webhook requests
+* add telegram support
