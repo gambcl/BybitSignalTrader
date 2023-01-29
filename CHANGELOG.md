@@ -1,3 +1,10 @@
+## [0.3.0](https://github.com/gambcl/SignalTrader/compare/v0.2.2...v0.3.0) (2023-01-29)
+
+
+### Features
+
+* support signals with signalscript body ([ef34c66](https://github.com/gambcl/SignalTrader/commit/ef34c66ae685dbac59acaeded3bdcf27f1074414))
+
 ## [0.2.2](https://github.com/gambcl/SignalTrader/compare/v0.2.1...v0.2.2) (2023-01-22)
 
 
