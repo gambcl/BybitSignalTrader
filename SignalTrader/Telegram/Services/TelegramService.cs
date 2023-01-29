@@ -30,8 +30,8 @@ public class TelegramService : ITelegramService, IDisposable
         _configuration = configuration;
         _serviceScopeFactory = serviceScopeFactory;
 
-        var botToken = _configuration["Notifications:Telegram:BotToken"];
-        if (!string.IsNullOrWhiteSpace(botToken) && long.TryParse(_configuration["Notifications:Telegram:ChatId"], out _chatId))
+        var botToken = _configuration["User:Notifications:Telegram:BotToken"];
+        if (!string.IsNullOrWhiteSpace(botToken) && long.TryParse(_configuration["User:Notifications:Telegram:ChatId"], out _chatId))
         {
             _telegramBotClient = new TelegramBotClient(botToken);
         }
