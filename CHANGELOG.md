@@ -1,3 +1,10 @@
+## [0.3.1](https://github.com/gambcl/SignalTrader/compare/v0.3.0...v0.3.1) (2023-01-29)
+
+
+### Bug Fixes
+
+* resolve async tree visitor issue and fix accountid type validation ([2a96193](https://github.com/gambcl/SignalTrader/commit/2a96193aa81e3dfe7c65330f05bb23bc01be2d9f))
+
 ## [0.3.0](https://github.com/gambcl/SignalTrader/compare/v0.2.2...v0.3.0) (2023-01-29)
 
 
