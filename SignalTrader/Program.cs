@@ -137,6 +137,11 @@ public class Program
         {
             Directory.CreateDirectory(logsPath);
         }
+        var signalsPath = Path.Combine(homePath, "signals");
+        if (!Directory.Exists(signalsPath))
+        {
+            Directory.CreateDirectory(signalsPath);
+        }
         var reportsPath = Path.Combine(homePath, "reports");
         if (!Directory.Exists(reportsPath))
         {

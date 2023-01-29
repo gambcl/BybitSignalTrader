@@ -78,9 +78,16 @@ public class AccountsService : IAccountsService
 
     public async Task<List<Account>> GetAccountsAsync()
     {
-        return await _signalTraderDbContext.Accounts.OrderBy(a => a.Name)
+        return await _signalTraderDbContext.Accounts
             .AsNoTracking()
             .ToListAsync();
+    }
+
+    public List<Account> GetAccounts()
+    {
+        return _signalTraderDbContext.Accounts
+            .AsNoTracking()
+            .ToList();
     }
 
     public async Task<Account?> GetAccountAsync(long accountId)
