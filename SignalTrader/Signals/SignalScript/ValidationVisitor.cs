@@ -290,11 +290,11 @@ public class ValidationVisitor : SignalScriptBaseVisitor<Task<ValueWrapper?>>
             new(Constants.SignalFunction.ParameterNames.Interval, new [] { ValueWrapper.ValueType.String }),
             new(Constants.SignalFunction.ParameterNames.SignalTime, new [] { ValueWrapper.ValueType.String }),
             new(Constants.SignalFunction.ParameterNames.BarTime, new [] { ValueWrapper.ValueType.String }),
-            new(Constants.SignalFunction.ParameterNames.Open, new [] { ValueWrapper.ValueType.Float }),
-            new(Constants.SignalFunction.ParameterNames.High, new [] { ValueWrapper.ValueType.Float }),
-            new(Constants.SignalFunction.ParameterNames.Low, new [] { ValueWrapper.ValueType.Float }),
-            new(Constants.SignalFunction.ParameterNames.Close, new [] { ValueWrapper.ValueType.Float }),
-            new(Constants.SignalFunction.ParameterNames.Volume, new [] { ValueWrapper.ValueType.Float }),
+            new(Constants.SignalFunction.ParameterNames.Open, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Int }),
+            new(Constants.SignalFunction.ParameterNames.High, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Int }),
+            new(Constants.SignalFunction.ParameterNames.Low, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Int }),
+            new(Constants.SignalFunction.ParameterNames.Close, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Int }),
+            new(Constants.SignalFunction.ParameterNames.Volume, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Int }),
             new(Constants.SignalFunction.ParameterNames.Passphrase, new [] { ValueWrapper.ValueType.String })
         };
 
