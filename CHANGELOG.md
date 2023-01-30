@@ -1,3 +1,10 @@
+## [0.3.2](https://github.com/gambcl/SignalTrader/compare/v0.3.1...v0.3.2) (2023-01-30)
+
+
+### Bug Fixes
+
+* accept integer values for ohlc values in signal ([398336b](https://github.com/gambcl/SignalTrader/commit/398336b12e3b723e9b7739ffd12e4fa835295460))
+
 ## [0.3.1](https://github.com/gambcl/SignalTrader/compare/v0.3.0...v0.3.1) (2023-01-29)
 
 
