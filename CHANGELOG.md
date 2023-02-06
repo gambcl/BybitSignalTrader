@@ -1,3 +1,10 @@
+## [0.4.0](https://github.com/gambcl/SignalTrader/compare/v0.3.2...v0.4.0) (2023-02-06)
+
+
+### Features
+
+* create orders and positions ([57a878b](https://github.com/gambcl/SignalTrader/commit/57a878b5d9868471d12a44742b67c5bffe32c8b6))
+
 ## [0.3.2](https://github.com/gambcl/SignalTrader/compare/v0.3.1...v0.3.2) (2023-01-30)
 
 
