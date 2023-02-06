@@ -434,9 +434,9 @@ public class ValidationVisitor : SignalScriptBaseVisitor<Task<ValueWrapper?>>
                     new(Constants.OpenPositionFunction.ParameterNames.LeverageType, new [] { ValueWrapper.ValueType.Leverage }),
                     new(Constants.OpenPositionFunction.ParameterNames.Quantity, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Int }),
                     new(Constants.OpenPositionFunction.ParameterNames.Cost, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Int, ValueWrapper.ValueType.FloatPercent, ValueWrapper.ValueType.IntPercent }),
-                    new(Constants.OpenPositionFunction.ParameterNames.Price, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Price }),
-                    new(Constants.OpenPositionFunction.ParameterNames.Offset, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.FloatPercent, ValueWrapper.ValueType.IntPercent }),
-                    new(Constants.OpenPositionFunction.ParameterNames.Stoploss, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.FloatPercent, ValueWrapper.ValueType.IntPercent })
+                    new(Constants.OpenPositionFunction.ParameterNames.Price, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Int, ValueWrapper.ValueType.Price }),
+                    new(Constants.OpenPositionFunction.ParameterNames.Offset, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Int, ValueWrapper.ValueType.FloatPercent, ValueWrapper.ValueType.IntPercent }),
+                    new(Constants.OpenPositionFunction.ParameterNames.StopLoss, new [] { ValueWrapper.ValueType.Float, ValueWrapper.ValueType.Int, ValueWrapper.ValueType.FloatPercent, ValueWrapper.ValueType.IntPercent })
                 };
 
                 // Require "price","offset" if "order"==limit

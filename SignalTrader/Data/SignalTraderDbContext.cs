@@ -40,18 +40,87 @@ public class SignalTraderDbContext : DbContext
         });
         // Account - Enums
         modelBuilder.Entity<Account>()
-            .Property(ea => ea.Exchange)
+            .Property(a => a.Exchange)
             .HasConversion(
                 v => v.ToString(),
                 v => (SupportedExchange)Enum.Parse(typeof(SupportedExchange), v));
         modelBuilder.Entity<Account>()
-            .Property(ea => ea.AccountType)
+            .Property(a => a.AccountType)
             .HasConversion(
                 v => v.ToString(),
                 v => (AccountType)Enum.Parse(typeof(AccountType), v));
+        modelBuilder.Entity<Account>()
+            .Property(a => a.ExchangeType)
+            .HasConversion(
+                v => v.ToString(),
+                v => (ExchangeType)Enum.Parse(typeof(ExchangeType), v));
+
+        // Position - Enums
+        modelBuilder.Entity<Position>()
+            .Property(p => p.Exchange)
+            .HasConversion(
+                v => v.ToString(),
+                v => (SupportedExchange)Enum.Parse(typeof(SupportedExchange), v));
+        modelBuilder.Entity<Position>()
+            .Property(p => p.Direction)
+            .HasConversion(
+                v => v.ToString(),
+                v => (Direction)Enum.Parse(typeof(Direction), v));
+        modelBuilder.Entity<Position>()
+            .Property(p => p.LeverageType)
+            .HasConversion(
+                v => v.ToString(),
+                v => (LeverageType)Enum.Parse(typeof(LeverageType), v));
+        modelBuilder.Entity<Position>()
+            .Property(p => p.Status)
+            .HasConversion(
+                v => v.ToString(),
+                v => (PositionStatus)Enum.Parse(typeof(PositionStatus), v));
+        // Position - Relationships
+        modelBuilder.Entity<Position>()
+            .HasOne(p => p.Account)
+            .WithMany(a => a.Positions)
+            .IsRequired(true)
+            .OnDelete(DeleteBehavior.Cascade);
+        
+        // Order - Enums
+        modelBuilder.Entity<Order>()
+            .Property(o => o.Exchange)
+            .HasConversion(
+                v => v.ToString(),
+                v => (SupportedExchange)Enum.Parse(typeof(SupportedExchange), v));
+        modelBuilder.Entity<Order>()
+            .Property(o => o.Side)
+            .HasConversion(
+                v => v.ToString(),
+                v => (Side)Enum.Parse(typeof(Side), v));
+        modelBuilder.Entity<Order>()
+            .Property(o => o.Type)
+            .HasConversion(
+                v => v.ToString(),
+                v => (OrderType)Enum.Parse(typeof(OrderType), v));
+        modelBuilder.Entity<Order>()
+            .Property(o => o.Status)
+            .HasConversion(
+                v => v.ToString(),
+                v => (OrderStatus)Enum.Parse(typeof(OrderStatus), v));
+        // Order - Relationships
+        modelBuilder.Entity<Order>()
+            .HasOne(o => o.Position)
+            .WithMany(p => p.Orders)
+            .IsRequired(true)
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Order>()
+            .HasOne(o => o.Account)
+            .WithMany(a => a.Orders)
+            .IsRequired(true)
+            .OnDelete(DeleteBehavior.Cascade);
     }
     
     public DbSet<Account> Accounts { get; set; } = null!;
+    public DbSet<Signal> Signals { get; set; } = null!;
+    public DbSet<Position> Positions { get; set; } = null!;
+    public DbSet<Order> Orders { get; set; } = null!;
 
     #endregion
     

@@ -39,10 +39,10 @@ public class AccountsWorker : IHostedService, IDisposable
     {
         _logger.LogDebug($"AccountsWorker starting");
 
-        var balancesUpdateIntervalSeconds = _configuration.GetValue<int>("Accounts:BalancesUpdateIntervalSeconds");
-        if (balancesUpdateIntervalSeconds > 0)
+        var updateBalancesIntervalSeconds = _configuration.GetValue<int>("Accounts:UpdateBalancesIntervalSeconds");
+        if (updateBalancesIntervalSeconds > 0)
         {
-            _timerUpdateBalances = new Timer(DoUpdateBalancesWorkAsync, null, TimeSpan.Zero, TimeSpan.FromSeconds(balancesUpdateIntervalSeconds));
+            _timerUpdateBalances = new Timer(DoUpdateBalancesWorkAsync, null, TimeSpan.Zero, TimeSpan.FromSeconds(updateBalancesIntervalSeconds));
         }
             
         return Task.CompletedTask;
@@ -66,7 +66,7 @@ public class AccountsWorker : IHostedService, IDisposable
             using (var scope = _serviceScopeFactory.CreateAsyncScope())
             {
                 var accountsService = scope.ServiceProvider.GetRequiredService<IAccountsService>();
-                await accountsService.UpdateBalances();
+                await accountsService.UpdateAccountsAsync();
             }
         }
         catch (Exception e)

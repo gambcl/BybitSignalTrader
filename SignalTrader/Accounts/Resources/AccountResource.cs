@@ -8,6 +8,8 @@ public class AccountResource
     public string Name { get; set; } = null!;
     public string? Comment { get; set; }
     public SupportedExchange Exchange { get; set; }
+    public string? ExchangeAccountId { get; set; }
+    public ExchangeType ExchangeType { get; set; }
     public string QuoteAsset { get; set; } = null!;
     public AccountType AccountType { get; set; }
     public string? ApiKey { get; set; }

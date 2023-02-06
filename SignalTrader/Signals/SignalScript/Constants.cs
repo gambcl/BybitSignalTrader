@@ -84,7 +84,7 @@ public static class Constants
             public const string LeverageType = "leverageType";
             public const string Quantity = "quantity";
             public const string Cost = "cost";
-            public const string Stoploss = "stoploss";
+            public const string StopLoss = "stopLoss";
         }
     }
 }

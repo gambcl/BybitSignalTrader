@@ -2,6 +2,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Channels;
 using Antlr4.Runtime.Tree;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -15,6 +16,10 @@ using SignalTrader.Authentication.Services;
 using SignalTrader.Data;
 using SignalTrader.Exchanges;
 using SignalTrader.Exchanges.Bybit;
+using SignalTrader.Orders.Services;
+using SignalTrader.Orders.Workers;
+using SignalTrader.Positions.Services;
+using SignalTrader.Positions.Workers;
 using SignalTrader.Signals.Services;
 using SignalTrader.Signals.Workers;
 using SignalTrader.Telegram.Services;
@@ -97,6 +102,9 @@ public class Startup
             // Serialize enums as strings.
             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
         });
+        
+        // Configure MediatR.
+        services.AddMediatR(typeof(Startup));
 
         // Injecting service into another with different lifetime:
         // * Never inject Scoped & Transient services into Singleton services.
@@ -109,11 +117,14 @@ public class Startup
         services.AddScoped<ISignalScriptService, SignalScriptService>();
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<IAccountsService, AccountsService>();
+        services.AddScoped<IOrdersService, OrdersService>();
+        services.AddScoped<IPositionsService, PositionsService>();
         services.AddScoped<IExchangeProvider, ExchangeProvider>();
         services.AddScoped<IBybitUsdtPerpetualExchange, BybitUsdtPerpetualExchange>();
 
         // Configure singleton services.
         services.AddSingleton<ITelegramService, TelegramService>();
+        services.AddSingleton<IBybitUsdtPerpetualExchangeListener, BybitUsdtPerpetualExchangeListener>();
         services.AddSingleton<Channel<IParseTree>>(Channel.CreateUnbounded<IParseTree>());
         services.AddSingleton<ChannelWriter<IParseTree>>(svc => svc.GetRequiredService<Channel<IParseTree>>().Writer);
         services.AddSingleton<ChannelReader<IParseTree>>(svc => svc.GetRequiredService<Channel<IParseTree>>().Reader);
@@ -121,7 +132,10 @@ public class Startup
         // Configure background workers (effectively singletons).
         services.AddHostedService<TelegramWorker>();
         services.AddHostedService<AccountsWorker>();
+        services.AddHostedService<OrdersWorker>();
+        services.AddHostedService<PositionsWorker>();
         services.AddHostedService<SignalScriptWorker>();
+        services.AddHostedService<BybitExchangeWorker>();
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
