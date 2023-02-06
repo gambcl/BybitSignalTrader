@@ -18,7 +18,7 @@ The authors and any contributors assume NO RESPONSIBILITY for your trading resul
 
 - Docker
 - TradingView account
-- Supported cryptocurrency exchange account (Bybit Futures)
+- Supported cryptocurrency exchange account (Bybit USDT Perpetual Futures)
 
 
 ## Current Status
@@ -29,16 +29,19 @@ Completed:
 - Logging
 - Webhook API
 - Send Telegram alerts when webhooks received
-
-To Do:
+- Archive signals to CSV files
 - Connect to exchange accounts
 - Fetch exchange account balances
-- Manage bot config
 - Place orders on exchange to open/close long positions
 - Place orders on exchange to open/close short positions
 - Send Telegram notifications on trade events
-- Send mothly performance notifications
+
+To Do:
+- Send monthly performance notifications
 - Export closed positions monthly to CSV
+- Add tests
+- Add documentation
+- Add more exchanges
 
 
 ## Setup

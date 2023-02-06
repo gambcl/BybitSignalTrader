@@ -55,37 +55,37 @@ public class SignalsController : ControllerBase
         catch (SignalScriptSecurityException ex)
         {
             _logger.LogError(ex, "Caught SignalScriptSecurityException in TradingViewSignalAsync");
-            await _telegramService.SendErrorNotificationAsync("Rejected TradingView webhook", ex.Message, Telegram.Constants.Emojis.MiddleFinger);
+            await _telegramService.SendMessageNotificationAsync(Telegram.Constants.Emojis.Locked, null, "Rejected TradingView webhook", ex.Message);
             return Unauthorized(new ErrorResource(ex.Message));
         }
         catch (SignalScriptExecutionException ex)
         {
             _logger.LogError(ex, "Caught SignalScriptExecutionException in TradingViewSignalAsync");
-            await _telegramService.SendErrorNotificationAsync("Failed to process TradingView webhook", ex.Message, Telegram.Constants.Emojis.DoubleExclamation);
+            await _telegramService.SendMessageNotificationAsync(Telegram.Constants.Emojis.NameBadge, null, "Failed to process TradingView webhook", ex.Message);
             return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResource(ex.Message));
         }
         catch (SignalScriptValidationException ex)
         {
             _logger.LogError(ex, "Caught SignalScriptValidationException in TradingViewSignalAsync");
-            await _telegramService.SendErrorNotificationAsync("Rejected TradingView webhook", ex.Message, Telegram.Constants.Emojis.Prohibited);
+            await _telegramService.SendMessageNotificationAsync(Telegram.Constants.Emojis.Prohibited, null, "Rejected TradingView webhook", ex.Message);
             return BadRequest(new ErrorResource(ex.Message));
         }
         catch (SignalScriptSyntaxException ex)
         {
             _logger.LogError(ex, "Caught SignalScriptSyntaxException in TradingViewSignalAsync");
-            await _telegramService.SendErrorNotificationAsync("Rejected TradingView webhook", ex.Message, Telegram.Constants.Emojis.Prohibited);
+            await _telegramService.SendMessageNotificationAsync(Telegram.Constants.Emojis.Prohibited, null, "Rejected TradingView webhook", ex.Message);
             return BadRequest(new ErrorResource(ex.Message));
         }
         catch (ArgumentException ex)
         {
             _logger.LogError(ex, "Caught ArgumentException in TradingViewSignalAsync");
-            await _telegramService.SendErrorNotificationAsync("Rejected TradingView webhook", ex.Message, Telegram.Constants.Emojis.Prohibited);
+            await _telegramService.SendMessageNotificationAsync(Telegram.Constants.Emojis.Prohibited, null, "Rejected TradingView webhook", ex.Message);
             return BadRequest(new ErrorResource(ex.Message));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Caught Exception in TradingViewSignalAsync");
-            await _telegramService.SendErrorNotificationAsync("Failed to process TradingView webhook", ex.Message, Telegram.Constants.Emojis.DoubleExclamation);
+            await _telegramService.SendMessageNotificationAsync(Telegram.Constants.Emojis.NameBadge, null, "Failed to process TradingView webhook", ex.Message);
             return StatusCode(StatusCodes.Status500InternalServerError, new ErrorResource(ex.Message));
         }
     }

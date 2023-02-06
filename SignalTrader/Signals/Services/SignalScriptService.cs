@@ -5,9 +5,9 @@ using Antlr4.Runtime.Tree;
 using Ardalis.GuardClauses;
 using CsvHelper;
 using CsvHelper.Configuration;
-using CsvHelper.TypeConversion;
 using SignalTrader.Accounts.Services;
-using SignalTrader.Common.Enums;
+using SignalTrader.Data;
+using SignalTrader.Data.Entities;
 using SignalTrader.Signals.Extensions;
 using SignalTrader.Signals.SignalScript;
 using SignalTrader.Signals.SignalScript.Exceptions;
@@ -40,17 +40,6 @@ public class SignalScriptService : ISignalScriptService
         public bool? ShortEnabled { get; set; }
     }
     
-    private class QuoteStringConverter : StringConverter
-    {
-        public override string ConvertToString(object? value, IWriterRow row, MemberMapData memberMapData)
-        {
-            if (value == null)
-                return "\"\"";
-
-            return "\"" + ((string)value).Replace("\"", "\"\"") + "\"";
-        }
-    }
-
     #endregion
 
     #region Members
@@ -61,12 +50,13 @@ public class SignalScriptService : ISignalScriptService
     private readonly ITelegramService _telegramService;
     private readonly ChannelWriter<IParseTree> _channelWriter;
     private readonly IServiceScopeFactory _serviceScopeFactory;
+    private readonly SignalTraderDbContext _signalTraderDbContext;
 
     #endregion
 
     #region Constructors
 
-    public SignalScriptService(ILogger<SignalScriptService> logger, IConfiguration configuration, IAccountsService accountsService, ITelegramService telegramService, ChannelWriter<IParseTree> channelWriter, IServiceScopeFactory serviceScopeFactory)
+    public SignalScriptService(ILogger<SignalScriptService> logger, IConfiguration configuration, IAccountsService accountsService, ITelegramService telegramService, ChannelWriter<IParseTree> channelWriter, IServiceScopeFactory serviceScopeFactory, SignalTraderDbContext signalTraderDbContext)
     {
         _logger = logger;
         _configuration = configuration;
@@ -74,6 +64,7 @@ public class SignalScriptService : ISignalScriptService
         _telegramService = telegramService;
         _channelWriter = channelWriter;
         _serviceScopeFactory = serviceScopeFactory;
+        _signalTraderDbContext = signalTraderDbContext;
     }
 
     #endregion
@@ -151,8 +142,33 @@ public class SignalScriptService : ISignalScriptService
             Guard.Against.Null(shortEnabled, nameof(shortEnabled));
             
             // Send Telegram notification to let user know we have received signal.
-            await _telegramService.SendSignalReceivedNotificationAsync(strategyName, signalName, exchange, ticker, interval.ToTradingViewTimeframe(), Telegram.Constants.Emojis.SatelliteAntenna);
+            await _telegramService.SendSignalReceivedNotificationAsync(strategyName, signalName, exchange, ticker, interval.ToTradingViewTimeframe());
         
+            // Save signal to db.
+            var signalDateTime = DateTime.Parse(signalTime, null, System.Globalization.DateTimeStyles.RoundtripKind);
+            var barDateTime = DateTime.Parse(barTime, null, System.Globalization.DateTimeStyles.RoundtripKind);
+            var signal = new Signal
+            {
+                SignalTimeUtcMillis = new DateTimeOffset(signalDateTime).ToUnixTimeMilliseconds(),
+                StrategyName = strategyName,
+                SignalName = signalName,
+                Exchange = exchange,
+                Ticker = ticker,
+                QuoteAsset = quoteAsset,
+                BaseAsset = baseAsset,
+                Interval = interval,
+                BarTimeUtcMillis = new DateTimeOffset(barDateTime).ToUnixTimeMilliseconds(),
+                Open = open.Value,
+                High = high.Value,
+                Low = low.Value,
+                Close = close.Value,
+                Volume = volume.Value,
+                LongEnabled = longEnabled.Value,
+                ShortEnabled = shortEnabled.Value
+            };
+            _signalTraderDbContext.Signals.Add(signal);
+            await _signalTraderDbContext.SaveChangesAsync();
+            
             // Archive signal to CSV file.
             var records = new List<SignalRecord>
             {
@@ -206,27 +222,6 @@ public class SignalScriptService : ISignalScriptService
             _logger.LogError(e, "Caught Exception in SignalReceivedAsync");
         }
     }
-
-    public Task CancelOrdersAsync(long accountId, string quoteAsset, string baseAsset, Side side)
-    {
-        // TODO: CancelOrders
-
-        return Task.CompletedTask;
-    }
-
-    public Task OpenPositionAsync(long accountId, string quoteAsset, string baseAsset)
-    {
-        // TODO: OpenPosition
-
-        return Task.CompletedTask;
-    }
-
-    public Task ClosePositionAsync(long accountId, string quoteAsset, string baseAsset)
-    {
-        // TODO: ClosePosition
-
-        return Task.CompletedTask;
-    }
-
+    
     #endregion
 }

@@ -14,7 +14,6 @@ public static class StringTradingViewExtensions
     public static string ToTradingViewTimeframe(this string value)
     {
         const long minutesPerHour = 60;
-        const long minutesPerDay = minutesPerHour * 24;
 
         if (Regex.IsMatch(value, @"^[0-9]+$"))
         {

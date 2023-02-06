@@ -1,11 +1,11 @@
 using System.Collections.Concurrent;
 using Ardalis.GuardClauses;
 using Microsoft.EntityFrameworkCore;
-using SignalTrader.Accounts.Models;
 using SignalTrader.Accounts.Resources;
 using SignalTrader.Data;
 using SignalTrader.Data.Entities;
 using SignalTrader.Exchanges;
+using SignalTrader.Exchanges.Models;
 
 namespace SignalTrader.Accounts.Services;
 
@@ -69,24 +69,42 @@ public class AccountsService : IAccountsService
             ApiSecret = resource.ApiSecret,
             ApiPassphrase = resource.ApiPassphrase
         };
+
+        var exchange = _exchangeProvider.GetExchange(account.Exchange);
+        if (exchange == null)
+        {
+            throw new ArgumentException($"Invalid exchange: {account.Exchange}");
+        }
         
+        var accountInfoResult = await exchange.GetAccountInfoAsync(account);
+        if (!accountInfoResult.Success)
+        {
+            _logger.LogError("Invalid exchange credentials: {Error}", accountInfoResult.Message);
+            throw new ArgumentException($"Invalid exchange credentials");
+        }
+
+        account.ExchangeAccountId = accountInfoResult.ExchangeAccountId;
+        account.ExchangeType = accountInfoResult.ExchangeType;
+
         _signalTraderDbContext.Accounts.Add(account);
         await _signalTraderDbContext.SaveChangesAsync();
         _logger.LogInformation("Added Account {Id}", account.Id);
+        
+        // Subscribe to updates for this account.
+        await exchange.SubscribeToUpdatesAsync(account);
+
         return account;
     }
 
     public async Task<List<Account>> GetAccountsAsync()
     {
         return await _signalTraderDbContext.Accounts
-            .AsNoTracking()
             .ToListAsync();
     }
 
     public List<Account> GetAccounts()
     {
         return _signalTraderDbContext.Accounts
-            .AsNoTracking()
             .ToList();
     }
 
@@ -95,7 +113,6 @@ public class AccountsService : IAccountsService
         Guard.Against.NegativeOrZero(accountId, nameof(accountId));
         
         return await _signalTraderDbContext.Accounts
-            .AsNoTracking()
             .FirstOrDefaultAsync(ea => ea.Id == accountId);
     }
 
@@ -157,36 +174,34 @@ public class AccountsService : IAccountsService
         throw new NotImplementedException();
     }
 
-    public async Task UpdateBalances()
+    public async Task UpdateAccountsAsync()
     {
-        var allIds = await _signalTraderDbContext.Accounts.Select(a => a.Id).ToListAsync();
-        foreach (var id in allIds)
+        var accounts = await _signalTraderDbContext.Accounts.ToListAsync();
+        foreach (var account in accounts)
         {
-            await UpdateBalances(id);
-        }
-    }
-
-    public async Task UpdateBalances(long accountId)
-    {
-        _logger.LogInformation("Updating balances for Account {AccountId}", accountId);
-        var account = await _signalTraderDbContext.Accounts.FindAsync(accountId);
-        if (account != null)
-        {
+            // Subscribe to exchange updates for this account.
             var exchange = _exchangeProvider.GetExchange(account.Exchange);
             if (exchange != null)
             {
-                var balances = await exchange.GetAccountBalancesAsync(account);
-                if (balances != null)
-                {
-                    if (AccountBalances.TryGetValue(accountId, out var oldBalances))
-                    {
-                        AccountBalances.TryUpdate(accountId, balances, oldBalances);
-                    }
-                    else
-                    {
-                        AccountBalances.TryAdd(accountId, balances);
-                    }
-                }
+                await exchange.SubscribeToUpdatesAsync(account);
+            }
+            
+            // Update account balances.
+            await UpdateAccountBalancesAsync(account);
+        }
+    }
+
+    public async Task UpdateAccountBalancesAsync(Account account)
+    {
+        _logger.LogInformation("Updating balances for Account {AccountId}", account.Id);
+        var exchange = _exchangeProvider.GetExchange(account.Exchange);
+        if (exchange != null)
+        {
+            // Update balances cache.
+            var balancesResult = await exchange.GetAccountBalancesAsync(account);
+            if (balancesResult.Success)
+            {
+                AccountBalances.AddOrUpdate(account.Id, balancesResult.AccountWalletBalances, (l, balances) => balancesResult.AccountWalletBalances);
             }
         }
     }

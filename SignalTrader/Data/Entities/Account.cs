@@ -8,8 +8,11 @@ using SignalTrader.Data.Attributes;
 namespace SignalTrader.Data.Entities;
 
 [Index(nameof(Exchange))]
+[Index(nameof(ExchangeAccountId))]
+[Index(nameof(Exchange), nameof(ExchangeAccountId), IsUnique = true)]
 [Index(nameof(QuoteAsset))]
 [Index(nameof(AccountType))]
+[Index(nameof(ExchangeType))]
 public class Account
 {
     public Account()
@@ -34,6 +37,11 @@ public class Account
     [MinLength(1), MaxLength(50)]
     public SupportedExchange Exchange { get; set; }
     
+    [MaxLength(100)]
+    public string? ExchangeAccountId { get; set; }
+    
+    public ExchangeType ExchangeType { get; set; }
+
     [MinLength(1), MaxLength(50)]
     public string QuoteAsset { get; set; } = null!;
         
@@ -63,7 +71,10 @@ public class Account
 
     [NotMapped]
     public string UpdatedUtcIso8601 => DateTimeOffset.FromUnixTimeMilliseconds(UpdatedUtcMillis).ToString("O");
-
+    
+    public List<Position> Positions { get; set; } = new();
+    public List<Order> Orders { get; set; } = new();
+    
     public AccountResource ToAccountResource()
     {
         return new AccountResource
@@ -72,6 +83,8 @@ public class Account
             Name = Name,
             Comment = Comment,
             Exchange = Exchange,
+            ExchangeAccountId = ExchangeAccountId,
+            ExchangeType = ExchangeType,
             QuoteAsset = QuoteAsset,
             AccountType = AccountType,
             ApiKey = ApiKey,

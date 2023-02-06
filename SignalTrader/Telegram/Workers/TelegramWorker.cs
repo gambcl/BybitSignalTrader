@@ -1,4 +1,3 @@
-using System.Reflection;
 using SignalTrader.Telegram.Services;
 
 namespace SignalTrader.Telegram.Workers;
@@ -30,7 +29,7 @@ public class TelegramWorker : IHostedService
         _telegramService.StartBot();
 
         // Send startup message.
-        await _telegramService.SendStartupNotificationAsync(Constants.Emojis.TrafficLight);
+        await _telegramService.SendStartupNotificationAsync();
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
