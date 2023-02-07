@@ -1,3 +1,10 @@
+## [0.4.1](https://github.com/gambcl/SignalTrader/compare/v0.4.0...v0.4.1) (2023-02-07)
+
+
+### Bug Fixes
+
+* updated nuget packages ([8df76a5](https://github.com/gambcl/SignalTrader/commit/8df76a5f32ea4196739c9fc8724358b9d689338c))
+
 ## [0.4.0](https://github.com/gambcl/SignalTrader/compare/v0.3.2...v0.4.0) (2023-02-06)
 
 
