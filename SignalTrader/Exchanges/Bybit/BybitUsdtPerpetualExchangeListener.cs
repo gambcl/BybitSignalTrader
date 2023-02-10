@@ -31,6 +31,7 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
     private readonly ConcurrentDictionary<long, UpdateSubscription> _positionUpdateSubscriptions = new();
     private readonly ConcurrentDictionary<long, UpdateSubscription> _orderUpdateSubscriptions = new();
     private readonly ConcurrentDictionary<string, Queue<BybitUserTradeUpdate>> _userTradeUpdates = new();
+    private readonly SemaphoreSlim _userTradeUpdatesSemaphoreSlim = new SemaphoreSlim(1, 1);
 
     #endregion
 
@@ -71,28 +72,33 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
             var bybitSocketClient = new BybitSocketClient(BybitFuturesExchange.BuildBybitSocketClientOptions(account, _configuration));
             var subscriptionResult = await bybitSocketClient.UsdPerpetualStreams.SubscribeToUserTradeUpdatesAsync(async @event =>
             {
-                foreach (var userTradeUpdate in @event.Data)
+                await _userTradeUpdatesSemaphoreSlim.WaitAsync();
+                try
                 {
-                    try
+                    foreach (var userTradeUpdate in @event.Data)
                     {
-                        _logger.LogDebug("Received UserTradeUpdate:\n{UserTradeUpdate}", JsonSerializer.Serialize(userTradeUpdate).ToString());
+                        try
+                        {
+                            _logger.LogInformation("Received UserTradeUpdate:\n{UserTradeUpdate}", JsonSerializer.Serialize(userTradeUpdate).ToString());
                     
-                        // STEP 1: Add update to our cache
-                        _userTradeUpdates.AddOrUpdate(userTradeUpdate.OrderId, 
-                            new Queue<BybitUserTradeUpdate>(new [] { userTradeUpdate }), 
-                            (s, queue) =>
-                            {
-                                queue.Enqueue(userTradeUpdate);
-                                return queue;
-                            });
-                    
-                        // STEP 2: Process cached updates if Order can be found in db.
-                        await ProcessUserTradeUpdatesAsync(userTradeUpdate.OrderId);
+                            // Add update to our cache
+                            _userTradeUpdates.AddOrUpdate(userTradeUpdate.OrderId, 
+                                new Queue<BybitUserTradeUpdate>(new [] { userTradeUpdate }), 
+                                (s, queue) =>
+                                {
+                                    queue.Enqueue(userTradeUpdate);
+                                    return queue;
+                                });
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogError(e, "Caught Exception in UserTradeUpdates handler");
+                        }
                     }
-                    catch (Exception e)
-                    {
-                        _logger.LogError(e, "Caught Exception in UserTradeUpdates handler");
-                    }
+                }
+                finally
+                {
+                    _userTradeUpdatesSemaphoreSlim.Release();
                 }
             }, _cancellationTokenSource!.Token);
             if (subscriptionResult.Success)
@@ -114,6 +120,7 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
 
     public async Task ProcessUserTradeUpdatesAsync(string exchangeOrderId, bool orderComplete = false)
     {
+        await _userTradeUpdatesSemaphoreSlim.WaitAsync();
         try
         {
             using var scope = _serviceScopeFactory.CreateAsyncScope();
@@ -121,19 +128,21 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
 
             if (_userTradeUpdates.TryGetValue(exchangeOrderId, out var userTradeUpdates))
             {
+                _logger.LogInformation("Processing UserTradeUpdates for {Exchange} order {ExchangeOrderId}", SupportedExchange.BybitUSDTPerpetual, exchangeOrderId);
+
                 // Get Order by ExchangeOrderId.
                 var orders = await signalTraderDbContext.Orders
                     .Include(o => o.Account)
                     .Include(o => o.Position)
                     .Where(o => o.Exchange == SupportedExchange.BybitUSDTPerpetual && o.ExchangeOrderId == exchangeOrderId)
                     .ToListAsync();
-        
+
                 // Should only be a single matching order.
                 var order = orders.SingleOrDefault();
                 if (order != null)
                 {
                     OrderStatus previousStatus = order.Status;
-                    
+
                     // Update QuantityFilled, Price.
                     decimal totalQuantityFilled = 0.0M;
                     decimal totalCost = 0.0M;
@@ -164,7 +173,7 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
                                 order.Status = OrderStatus.Filled;
                             }
                         }
-                    
+
                         order.UpdatedUtcMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                         await signalTraderDbContext.SaveChangesAsync();
 
@@ -186,6 +195,10 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
         catch (Exception e)
         {
             _logger.LogError(e, "Caught Exception in ProcessUserTradeUpdatesAsync");
+        }
+        finally
+        {
+            _userTradeUpdatesSemaphoreSlim.Release();
         }
     }
 
@@ -211,7 +224,7 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
                 {
                     try
                     {
-                        _logger.LogDebug("Received StopOrderUpdate:\n{StopOrderUpdate}", JsonSerializer.Serialize(stopOrderUpdate).ToString());
+                        _logger.LogInformation("Received StopOrderUpdate:\n{StopOrderUpdate}", JsonSerializer.Serialize(stopOrderUpdate).ToString());
 
                         // When StopLoss has been triggered add the exit order to Position, change Position status to StopLossInProgress.
                         if (stopOrderUpdate.Status == StopOrderStatus.Triggered)
@@ -321,7 +334,7 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
                 {
                     try
                     {
-                        _logger.LogDebug("Received PositionUpdate:\n{PositionUpdate}", JsonSerializer.Serialize(positionUsdPerpetualUpdate).ToString());
+                        _logger.LogInformation("Received PositionUpdate:\n{PositionUpdate}", JsonSerializer.Serialize(positionUsdPerpetualUpdate).ToString());
                         
                         // Skip updates indicating a flat position on exchange
                         if (positionUsdPerpetualUpdate.Side == PositionSide.None)
@@ -410,7 +423,7 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
                 {
                     try
                     {
-                        _logger.LogDebug("Received OrderUpdate:\n{OrderUpdate}", JsonSerializer.Serialize(orderUpdate).ToString());
+                        _logger.LogInformation("Received OrderUpdate:\n{OrderUpdate}", JsonSerializer.Serialize(orderUpdate).ToString());
                     
                         // Catch up with processing cached UserTradeUpdates, in case order is now in db.
                         await ProcessUserTradeUpdatesAsync(orderUpdate.Id);
