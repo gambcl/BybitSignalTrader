@@ -1,3 +1,10 @@
+## [0.4.4](https://github.com/gambcl/SignalTrader/compare/v0.4.3...v0.4.4) (2023-02-10)
+
+
+### Bug Fixes
+
+* attempt to fix issue with order fills being assigned to wrong order in db ([0b6afe6](https://github.com/gambcl/SignalTrader/commit/0b6afe6afd9c1372cabaadf684dc614611f2c924))
+
 ## [0.4.3](https://github.com/gambcl/SignalTrader/compare/v0.4.2...v0.4.3) (2023-02-10)
 
 
