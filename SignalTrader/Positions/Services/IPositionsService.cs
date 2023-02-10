@@ -13,4 +13,7 @@ public interface IPositionsService
     public Task UpdatePositionsAsync();
     public Task UpdatePositionAsync(Position position);
     public Task<ProfitAndLossResult> CalculateProfitAndLossAsync(Position position);
+
+    public Task<PositionsResult> GetPositionsAsync(long? accountId = null, SupportedExchange? exchange = null, string? quoteAsset = null, string? baseAsset = null, Direction? direction = null, PositionStatus? status = null);
+    public Task<PositionResult> GetPositionAsync(long positionId);
 }

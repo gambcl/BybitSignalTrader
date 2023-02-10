@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 using SignalTrader.Common.Enums;
+using SignalTrader.Positions.Resources;
 
 namespace SignalTrader.Data.Entities;
 
@@ -81,4 +82,31 @@ public class Position
     public bool IsComplete => (Status == PositionStatus.Closed) || (Status == PositionStatus.Liquidated) || (Status == PositionStatus.StopLoss);
 
     public List<Order> Orders { get; set; } = new();
+
+    public PositionResource ToPositionResource()
+    {
+        return new PositionResource
+        {
+            Id = Id,
+            AccountId = AccountId,
+            AccountName = Account.Name,
+            Exchange = Exchange,
+            QuoteAsset = QuoteAsset,
+            BaseAsset = BaseAsset,
+            Direction = Direction,
+            LeverageMultiplier = LeverageMultiplier,
+            LeverageType = LeverageType,
+            Quantity = Quantity,
+            UnrealisedPnl = UnrealisedPnl,
+            UnrealisedPnlPercent = UnrealisedPnlPercent,
+            RealisedPnl = RealisedPnl,
+            RealisedPnlPercent = RealisedPnlPercent,
+            StopLoss = StopLoss,
+            LiquidationPrice = LiquidationPrice,
+            Status = Status,
+            CreatedUtcMillis = CreatedUtcMillis,
+            UpdatedUtcMillis = UpdatedUtcMillis,
+            CompletedUtcMillis = CompletedUtcMillis
+        };
+    }
 }

@@ -681,6 +681,45 @@ public class PositionsService : IPositionsService
         };
     }
 
+    public async Task<PositionsResult> GetPositionsAsync(long? accountId = null, SupportedExchange? exchange = null, string? quoteAsset = null, string? baseAsset = null, Direction? direction = null, PositionStatus? status = null)
+    {
+        var positions = await _signalTraderDbContext.Positions
+            .Include(p => p.Account)
+            .Where(p => (!accountId.HasValue || p.AccountId == accountId) &&
+                        (!exchange.HasValue || p.Exchange == exchange) &&
+                        (string.IsNullOrWhiteSpace(quoteAsset) || p.QuoteAsset.Equals(quoteAsset)) &&
+                        (string.IsNullOrWhiteSpace(baseAsset) || p.BaseAsset.Equals(baseAsset)) &&
+                        (!direction.HasValue || p.Direction == direction) &&
+                        (!status.HasValue || p.Status == status))
+            .OrderBy(p => p.Id)
+            .ToListAsync();
+
+        return new PositionsResult(true)
+        {
+            Positions = positions.Select(p => p.ToPositionResource()).ToList()
+        };
+    }
+
+    public async Task<PositionResult> GetPositionAsync(long positionId)
+    {
+        Guard.Against.NegativeOrZero(positionId, nameof(positionId));
+        
+        var position = await _signalTraderDbContext.Positions
+            .Include(p => p.Account)
+            .Where(p => p.Id == positionId)
+            .SingleOrDefaultAsync();
+
+        if (position != null)
+        {
+            return new PositionResult(true)
+            {
+                Position = position.ToPositionResource()
+            };
+        }
+
+        return new PositionResult($"Position {positionId} not found");
+    }
+
     #endregion
     
     #region Private
