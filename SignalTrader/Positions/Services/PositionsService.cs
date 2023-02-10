@@ -46,6 +46,117 @@ public class PositionsService : IPositionsService
 
     #endregion
 
+    #region Static
+
+    public static string? DeterminePnlEmoji(PositionStatus status, decimal pnlPercent)
+    {
+        if (status == PositionStatus.Liquidated)
+        {
+            return Telegram.Constants.Emojis.SkullCrossBones;
+        }
+        else if (status == PositionStatus.StopLoss)
+        {
+            return Telegram.Constants.Emojis.Poo;
+        }
+        else if (status == PositionStatus.Closed)
+        {
+            switch (pnlPercent)
+            {
+                case >= 100.0M:
+                    return Telegram.Constants.Emojis.Profit100;
+                case >= 90.0M:
+                    return Telegram.Constants.Emojis.Profit90;
+                case >= 80.0M:
+                    return Telegram.Constants.Emojis.Profit80;
+                case >= 70.0M:
+                    return Telegram.Constants.Emojis.Profit70;
+                case >= 60.0M:
+                    return Telegram.Constants.Emojis.Profit60;
+                case >= 50.0M:
+                    return Telegram.Constants.Emojis.Profit50;
+                case >= 40.0M:
+                    return Telegram.Constants.Emojis.Profit40;
+                case >= 30.0M:
+                    return Telegram.Constants.Emojis.Profit30;
+                case >= 20.0M:
+                    return Telegram.Constants.Emojis.Profit20;
+                case >= 10.0M:
+                    return Telegram.Constants.Emojis.Profit10;
+                case >= 1.0M:
+                    return Telegram.Constants.Emojis.Profit1;
+                case >= 0.0M:
+                    return Telegram.Constants.Emojis.Profit0;
+                case <= -100.0M:
+                    return Telegram.Constants.Emojis.Loss100;
+                case <= -90.0M:
+                    return Telegram.Constants.Emojis.Loss90;
+                case <= -80.0M:
+                    return Telegram.Constants.Emojis.Loss80;
+                case <= -70.0M:
+                    return Telegram.Constants.Emojis.Loss70;
+                case <= -60.0M:
+                    return Telegram.Constants.Emojis.Loss60;
+                case <= -50.0M:
+                    return Telegram.Constants.Emojis.Loss50;
+                case <= -40.0M:
+                    return Telegram.Constants.Emojis.Loss40;
+                case <= -30.0M:
+                    return Telegram.Constants.Emojis.Loss30;
+                case <= -20.0M:
+                    return Telegram.Constants.Emojis.Loss20;
+                case <= -10.0M:
+                    return Telegram.Constants.Emojis.Loss10;
+                case < -1.0M:
+                    return Telegram.Constants.Emojis.Loss1;
+                case < -0.0M:
+                    return Telegram.Constants.Emojis.Loss0;
+            }
+        }
+
+        return null;
+    }
+
+    public static string FormatDuration(long startUtcMillis, long endUtcMillis)
+    {
+        string result = string.Empty;
+
+        long durationMillis = Math.Max(startUtcMillis, endUtcMillis) - Math.Min(startUtcMillis, endUtcMillis);
+        var remainingTimeSpan = TimeSpan.FromSeconds(durationMillis / 1000.0);
+        
+        // Format into: ?d ?h ?m
+        int days = 0;
+        int hours = 0;
+        int minutes = 0;
+
+        days = (int)Math.Floor(remainingTimeSpan.TotalDays);
+        remainingTimeSpan = remainingTimeSpan - TimeSpan.FromDays(days);
+
+        hours = (int)Math.Floor(remainingTimeSpan.TotalHours);
+        remainingTimeSpan = remainingTimeSpan - TimeSpan.FromHours(hours);
+
+        minutes = (int)Math.Floor(remainingTimeSpan.TotalMinutes);
+        remainingTimeSpan = remainingTimeSpan - TimeSpan.FromMinutes(minutes);
+
+        /*
+        var parts = new List<string>();
+        if (days > 0)
+        {
+            parts.Add(($"{days}d"));
+        }
+        if (days > 0 || hours > 0)
+        {
+            parts.Add(($"{hours}h"));
+        }
+        parts.Add($"{minutes}m");
+
+        return string.Join(" ", parts);
+        */
+        
+        return $"{days}d {hours}h {minutes}m";
+    }
+
+    #endregion
+
     #region IPositionsService
 
     public async Task OpenPositionAsync(long? accountId, string? quoteAsset, string? baseAsset, decimal? leverageMultiplier, LeverageType? leverageType, Direction? direction, OrderType? orderType, decimal? quantity, ValueWrapper? costValue, ValueWrapper? priceValue, ValueWrapper? offsetValue, ValueWrapper? stopLossValue)

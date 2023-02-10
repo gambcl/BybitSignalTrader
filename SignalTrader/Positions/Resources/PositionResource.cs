@@ -14,14 +14,14 @@ public class PositionResource
     public decimal? LeverageMultiplier { get; set; }
     public LeverageType? LeverageType { get; set; }
     public decimal Quantity { get; set; }
-    public decimal? UnrealisedPnl { get; set; }
-    public decimal? UnrealisedPnlPercent { get; set; }
-    public decimal? RealisedPnl { get; set; }
-    public decimal? RealisedPnlPercent { get; set; }
+    public decimal UnrealisedPnl { get; set; }
+    public decimal UnrealisedPnlPercent { get; set; }
+    public decimal RealisedPnl { get; set; }
+    public decimal RealisedPnlPercent { get; set; }
     public decimal? StopLoss { get; set; }
     public decimal? LiquidationPrice { get; set; }
     public PositionStatus Status { get; set; }
-    public decimal? CreatedUtcMillis { get; set; }
-    public decimal? UpdatedUtcMillis { get; set; }
-    public decimal? CompletedUtcMillis { get; set; }
+    public long? CreatedUtcMillis { get; set; }
+    public long? UpdatedUtcMillis { get; set; }
+    public long? CompletedUtcMillis { get; set; }
 }
