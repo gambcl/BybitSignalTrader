@@ -164,7 +164,7 @@ public class PositionStatusChangedNotificationHandler : INotificationHandler<Pos
             accuracy = ((decimal)winnersCount / filledClosedPositionsCount) * 100.0M;
         }
 
-        return new AccuracyResult
+        return new AccuracyResult(true)
         {
             Exchange = position.Exchange,
             QuoteAsset = position.QuoteAsset,

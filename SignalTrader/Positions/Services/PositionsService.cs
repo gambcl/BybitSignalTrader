@@ -600,11 +600,7 @@ public class PositionsService : IPositionsService
 
         if (entryOrders.Count == 0)
         {
-            return new ProfitAndLossResult
-            {
-                Success = false,
-                Message = "No entry orders found"
-            };
+            return new ProfitAndLossResult("No entry orders found");
         }
         
         foreach (var entryOrder in entryOrders)
@@ -617,11 +613,7 @@ public class PositionsService : IPositionsService
             }
             else
             {
-                return new ProfitAndLossResult
-                {
-                    Success = false,
-                    Message = "Found entry order with missing Price"
-                };
+                return new ProfitAndLossResult("Found entry order with missing Price");
             }
         }
 
@@ -651,11 +643,7 @@ public class PositionsService : IPositionsService
                 }
                 else
                 {
-                    return new ProfitAndLossResult
-                    {
-                        Success = false,
-                        Message = "Found exit order with missing Price"
-                    };
+                    return new ProfitAndLossResult("Found exit order with missing Price");
                 }
             }
         
@@ -680,9 +668,8 @@ public class PositionsService : IPositionsService
             }
         }
         
-        return new ProfitAndLossResult
+        return new ProfitAndLossResult(true)
         {
-            Success = true,
             Exchange = position.Exchange,
             QuoteAsset = position.QuoteAsset,
             BaseAsset = position.BaseAsset,

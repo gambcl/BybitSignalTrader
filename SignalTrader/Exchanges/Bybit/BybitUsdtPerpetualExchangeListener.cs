@@ -64,10 +64,7 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
         {
             if (_userTradeUpdateSubscriptions.ContainsKey(account.Id))
             {
-                return new ExchangeSubscriptionResult
-                {
-                    Success = true
-                };
+                return new ExchangeSubscriptionResult(true);
             }
             
             _logger.LogInformation("Subscribing to UserTradeUpdates for account {AccountId}", account.Id);
@@ -102,27 +99,16 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
             {
                 _logger.LogInformation("Subscribed to UserTradeUpdates for account {AccountId}", account.Id);
                 _userTradeUpdateSubscriptions.AddOrUpdate(account.Id, subscriptionResult.Data, (l, subscription) => subscriptionResult.Data);
-                return new ExchangeSubscriptionResult
-                {
-                    Success = true
-                };
+                return new ExchangeSubscriptionResult(true);
             }
 
             _logger.LogInformation("Failed to subscribe to UserTradeUpdates for account {AccountId}: {Error}", account.Id, subscriptionResult.Error!.ToString());
-            return new ExchangeSubscriptionResult
-            {
-                Success = false,
-                Message = subscriptionResult.Error!.ToString()
-            };
+            return new ExchangeSubscriptionResult(subscriptionResult.Error!.ToString());
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Caught Exception in SubscribeToUserTradeUpdatesAsync");
-            return new ExchangeSubscriptionResult
-            {
-                Success = false,
-                Message = e.Message
-            };
+            return new ExchangeSubscriptionResult(e.Message);
         }
     }
 
@@ -209,10 +195,7 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
         {
             if (_stopOrderUpdateSubscriptions.ContainsKey(account.Id))
             {
-                return new ExchangeSubscriptionResult
-                {
-                    Success = true
-                };
+                return new ExchangeSubscriptionResult(true);
             }
 
             var accountId = account.Id;
@@ -304,27 +287,16 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
             {
                 _logger.LogInformation("Subscribed to StopOrderUpdates for account {AccountId}", account.Id);
                 _stopOrderUpdateSubscriptions.AddOrUpdate(account.Id, subscriptionResult.Data, (l, subscription) => subscriptionResult.Data);
-                return new ExchangeSubscriptionResult
-                {
-                    Success = true
-                };
+                return new ExchangeSubscriptionResult(true);
             }
 
             _logger.LogInformation("Failed to subscribe to StopOrderUpdates for account {AccountId}: {Error}", account.Id, subscriptionResult.Error!.ToString());
-            return new ExchangeSubscriptionResult
-            {
-                Success = false,
-                Message = subscriptionResult.Error!.ToString()
-            };
+            return new ExchangeSubscriptionResult(subscriptionResult.Error!.ToString());
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Caught Exception in SubscribeToStopOrderUpdatesAsync");
-            return new ExchangeSubscriptionResult
-            {
-                Success = false,
-                Message = e.Message
-            };
+            return new ExchangeSubscriptionResult(e.Message);
         }
     }
 
@@ -334,10 +306,7 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
         {
             if (_positionUpdateSubscriptions.ContainsKey(account.Id))
             {
-                return new ExchangeSubscriptionResult
-                {
-                    Success = true
-                };
+                return new ExchangeSubscriptionResult(true);
             }
 
             var accountId = account.Id;
@@ -410,27 +379,16 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
             {
                 _logger.LogInformation("Subscribed to PositionUpdates for account {AccountId}", account.Id);
                 _positionUpdateSubscriptions.AddOrUpdate(account.Id, subscriptionResult.Data, (l, subscription) => subscriptionResult.Data);
-                return new ExchangeSubscriptionResult
-                {
-                    Success = true
-                };
+                return new ExchangeSubscriptionResult(true);
             }
 
             _logger.LogInformation("Failed to subscribe to PositionUpdates for account {AccountId}: {Error}", account.Id, subscriptionResult.Error!.ToString());
-            return new ExchangeSubscriptionResult
-            {
-                Success = false,
-                Message = subscriptionResult.Error!.ToString()
-            };
+            return new ExchangeSubscriptionResult(subscriptionResult.Error!.ToString());
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Caught Exception in SubscribeToPositionUpdatesAsync");
-            return new ExchangeSubscriptionResult
-            {
-                Success = false,
-                Message = e.Message
-            };
+            return new ExchangeSubscriptionResult(e.Message);
         }
     }
 
@@ -440,10 +398,7 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
         {
             if (_orderUpdateSubscriptions.ContainsKey(account.Id))
             {
-                return new ExchangeSubscriptionResult
-                {
-                    Success = true
-                };
+                return new ExchangeSubscriptionResult(true);
             }
             
             _logger.LogInformation("Subscribing to OrderUpdates for account {AccountId}", account.Id);
@@ -470,27 +425,16 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
             {
                 _logger.LogInformation("Subscribed to OrderUpdates for account {AccountId}", account.Id);
                 _orderUpdateSubscriptions.AddOrUpdate(account.Id, subscriptionResult.Data, (l, subscription) => subscriptionResult.Data);
-                return new ExchangeSubscriptionResult
-                {
-                    Success = true
-                };
+                return new ExchangeSubscriptionResult(true);
             }
 
             _logger.LogInformation("Failed to subscribe to OrderUpdates for account {AccountId}: {Error}", account.Id, subscriptionResult.Error!.ToString());
-            return new ExchangeSubscriptionResult
-            {
-                Success = false,
-                Message = subscriptionResult.Error!.ToString()
-            };
+            return new ExchangeSubscriptionResult(subscriptionResult.Error!.ToString());
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Caught Exception in SubscribeToOrderUpdatesAsync");
-            return new ExchangeSubscriptionResult
-            {
-                Success = false,
-                Message = e.Message
-            };
+            return new ExchangeSubscriptionResult(e.Message);
         }
     }
 
