@@ -1,9 +1,18 @@
 using SignalTrader.Common.Enums;
+using SignalTrader.Common.Models;
 
 namespace SignalTrader.Positions.Models;
 
-public class AccuracyResult
+public class AccuracyResult : ServiceResult
 {
+    public AccuracyResult(bool success) : base(success)
+    {
+    }
+
+    public AccuracyResult(string message) : base(message)
+    {
+    }
+
     public SupportedExchange Exchange { get; set; }
     public string QuoteAsset { get; set; } = null!;
     public string BaseAsset { get; set; } = null!;

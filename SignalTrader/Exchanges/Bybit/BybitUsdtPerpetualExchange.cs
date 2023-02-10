@@ -159,9 +159,8 @@ public class BybitUsdtPerpetualExchange : BybitFuturesExchange, IBybitUsdtPerpet
                 leverageType,
                 closing);
 
-            return new OrderResult
+            return new OrderResult(orderResult.Success)
             {
-                Success = orderResult.Success,
                 Status = OrderStatus.Created,
                 Exchange = SupportedExchange.BybitUSDTPerpetual,
                 Id = orderResult.Data.Id,
@@ -179,11 +178,7 @@ public class BybitUsdtPerpetualExchange : BybitFuturesExchange, IBybitUsdtPerpet
         catch (Exception e)
         {
             _logger.LogError(e, "Caught Exception in PlaceOrderAsync");
-            return new OrderResult
-            {
-                Success = false,
-                Message = e.Message
-            };
+            return new OrderResult(e.Message);
         }
     }
 
@@ -203,10 +198,8 @@ public class BybitUsdtPerpetualExchange : BybitFuturesExchange, IBybitUsdtPerpet
 
             var exchangePosition = result.Data.FirstOrDefault();
 
-            return new PositionInfoResult
+            return new PositionInfoResult(result.Success)
             {
-                Success = result.Success,
-                
                 Exchange = SupportedExchange.BybitUSDTPerpetual,
                 QuoteAsset = quoteAsset,
                 BaseAsset = baseAsset,
@@ -229,11 +222,7 @@ public class BybitUsdtPerpetualExchange : BybitFuturesExchange, IBybitUsdtPerpet
         catch (Exception e)
         {
             _logger.LogError(e, "Caught Exception in GetPositionInfoAsync");
-            return new PositionInfoResult()
-            {
-                Success = false,
-                Message = e.Message
-            };
+            return new PositionInfoResult(e.Message);
         }
     }
 
@@ -251,19 +240,12 @@ public class BybitUsdtPerpetualExchange : BybitFuturesExchange, IBybitUsdtPerpet
                 throw new ExchangeException($"Failed to cancel order {orderId} for {symbol}:\n{result.Error!.ToString()}");
             }
             
-            return new ExchangeResult
-            {
-                Success = result.Success
-            };
+            return new ExchangeResult(result.Success);
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Caught Exception in CancelOrderAsync");
-            return new ExchangeResult()
-            {
-                Success = false,
-                Message = e.Message
-            };
+            return new ExchangeResult(e.Message);
         }
     }
 
@@ -301,9 +283,8 @@ public class BybitUsdtPerpetualExchange : BybitFuturesExchange, IBybitUsdtPerpet
             
             if (order != null)
             {
-                return new OrderResult()
+                return new OrderResult(true)
                 {
-                    Success = true,
                     Id = order.Id,
                     Exchange = SupportedExchange.BybitUSDTPerpetual,
                     Symbol = order.Symbol,
@@ -348,11 +329,7 @@ public class BybitUsdtPerpetualExchange : BybitFuturesExchange, IBybitUsdtPerpet
         catch (Exception e)
         {
             _logger.LogError(e, "Caught Exception in GetOrderInfoAsync");
-            return new OrderResult()
-            {
-                Success = false,
-                Message = e.Message
-            };
+            return new OrderResult(e.Message);
         }
     }
 
@@ -387,26 +364,15 @@ public class BybitUsdtPerpetualExchange : BybitFuturesExchange, IBybitUsdtPerpet
 
             if (errors.Count > 0)
             {
-                return new ExchangeSubscriptionResult
-                {
-                    Success = false,
-                    Message = string.Join("\n", errors)
-                };
+                return new ExchangeSubscriptionResult(string.Join("\n", errors));
             }
 
-            return new ExchangeSubscriptionResult
-            {
-                Success = true
-            };
+            return new ExchangeSubscriptionResult(true);
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Caught Exception in SubscribeToUpdatesAsync");
-            return new ExchangeSubscriptionResult
-            {
-                Success = false,
-                Message = e.Message
-            };
+            return new ExchangeSubscriptionResult(e.Message);
         }
     }
 

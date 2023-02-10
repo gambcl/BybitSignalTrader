@@ -94,20 +94,20 @@ public class AccountsController : ControllerBase
         }
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{accountId:long}")]
     [Produces("application/json")]
-    public async Task<IActionResult> GetAccountAsync(int id, bool includeBalances = false)
+    public async Task<IActionResult> GetAccountAsync(long accountId, bool includeBalances = false)
     {
         try
         {
-            var account = await _accountsService.GetAccountAsync(id);
+            var account = await _accountsService.GetAccountAsync(accountId);
             if (account != null)
             {
                 var result = account.ToAccountResource();
                 if (includeBalances)
                 {
                     // Fetch balances and add to resource.
-                    var balances = _accountsService.GetBalances(id);
+                    var balances = _accountsService.GetBalances(accountId);
                     Dictionary<string, AccountWalletBalanceResource> balancesResources = new();
                     foreach (var kv in balances)
                     {
@@ -123,7 +123,7 @@ public class AccountsController : ControllerBase
                 return Ok(result);
             }
 
-            return NotFound(new ErrorResource($"Account {id} not found"));
+            return NotFound(new ErrorResource($"Account {accountId} not found"));
         }
         catch (ArgumentException ae)
         {
@@ -160,19 +160,19 @@ public class AccountsController : ControllerBase
         }
     }
 
-    [HttpDelete("{id}")]
+    [HttpDelete("{accountId:long}")]
     [Produces("application/json")]
-    public async Task<IActionResult> DeleteAccountAsync(int id)
+    public async Task<IActionResult> DeleteAccountAsync(int accountId)
     {
         try
         {
-            var result = await _accountsService.DeleteAccountAsync(id);
+            var result = await _accountsService.DeleteAccountAsync(accountId);
             if (result)
             {
                 return Ok();
             }
 
-            return NotFound(new ErrorResource($"Account {id} not found"));
+            return NotFound(new ErrorResource($"Account {accountId} not found"));
         }
         catch (ArgumentException ae)
         {

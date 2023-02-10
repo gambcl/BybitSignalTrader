@@ -4,6 +4,14 @@ namespace SignalTrader.Positions.Models;
 
 public class OrderResult : ExchangeResult
 {
+    public OrderResult(bool success) : base(success)
+    {
+    }
+
+    public OrderResult(string message) : base(message)
+    {
+    }
+
     public SupportedExchange Exchange { get; set; }
     public string Id { get; set; } = string.Empty;
     public string Symbol { get; set; } = string.Empty;

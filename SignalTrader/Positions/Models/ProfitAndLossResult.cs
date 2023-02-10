@@ -1,11 +1,17 @@
 using SignalTrader.Common.Enums;
+using SignalTrader.Common.Models;
 
 namespace SignalTrader.Positions.Models;
 
-public class ProfitAndLossResult
+public class ProfitAndLossResult : ServiceResult
 {
-    public bool Success { get; set; }
-    public string? Message { get; set; }
+    public ProfitAndLossResult(bool success) : base(success)
+    {
+    }
+
+    public ProfitAndLossResult(string message) : base(message)
+    {
+    }
 
     public SupportedExchange Exchange { get; set; }
     public string QuoteAsset { get; set; } = null!;

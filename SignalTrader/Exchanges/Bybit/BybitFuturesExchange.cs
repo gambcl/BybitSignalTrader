@@ -47,28 +47,19 @@ public class BybitFuturesExchange : IBybitFuturesExchange
             if (apiKeyInfoResult.Success && apiKeyInfoResult.Data.Any())
             {
                 var apiKeyInfo = apiKeyInfoResult.Data.First();
-                return new AccountInfoResult
+                return new AccountInfoResult(true)
                 {
-                    Success = true,
                     ExchangeAccountId = apiKeyInfo.UserId.ToString(),
                     ExchangeType = ExchangeType.Futures
                 };
             }
 
-            return new AccountInfoResult
-            {
-                Success = false,
-                Message = apiKeyInfoResult.Error!.ToString()
-            };
+            return new AccountInfoResult(apiKeyInfoResult.Error!.ToString());
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Caught Exception in GetAccountInfoAsync");
-            return new AccountInfoResult
-            {
-                Success = false,
-                Message = e.Message
-            };
+            return new AccountInfoResult(e.Message);
         }
     }
 
@@ -86,28 +77,19 @@ public class BybitFuturesExchange : IBybitFuturesExchange
                 {
                     result[kv.Key] = new AccountWalletBalance(kv.Key, kv.Value.WalletBalance, kv.Value.AvailableBalance);
                 }
-                return new AccountBalancesResult
+                return new AccountBalancesResult(true)
                 {
-                    Success = true,
                     AccountWalletBalances = result
                 };
             }
 
             _logger.LogError("Failed to fetch account balances for account {AccountId}: {Error}", account.Id, balancesResult.Error!.ToString());
-            return new AccountBalancesResult
-            {
-                Success = false,
-                Message = balancesResult.Error!.ToString()
-            };
+            return new AccountBalancesResult(balancesResult.Error!.ToString());
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Caught Exception in GetAccountBalancesAsync");
-            return new AccountBalancesResult
-            {
-                Success = false,
-                Message = e.Message
-            };
+            return new AccountBalancesResult(e.Message);
         }
     }
 

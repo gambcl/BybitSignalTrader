@@ -1,7 +1,14 @@
+using SignalTrader.Common.Models;
+
 namespace SignalTrader.Exchanges.Models;
 
-public class ExchangeSubscriptionResult
+public class ExchangeSubscriptionResult : ServiceResult
 {
-    public bool Success { get; set; }
-    public string? Message { get; set; }
+    public ExchangeSubscriptionResult(bool success) : base(success)
+    {
+    }
+
+    public ExchangeSubscriptionResult(string message) : base(message)
+    {
+    }
 }
