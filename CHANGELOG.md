@@ -1,3 +1,10 @@
+## [0.4.3](https://github.com/gambcl/SignalTrader/compare/v0.4.2...v0.4.3) (2023-02-10)
+
+
+### Bug Fixes
+
+* show positions via telegram ([d25ce71](https://github.com/gambcl/SignalTrader/commit/d25ce714c595a7ecc8fe403d3858e3bc6de31f72))
+
 ## [0.4.2](https://github.com/gambcl/SignalTrader/compare/v0.4.1...v0.4.2) (2023-02-10)
 
 
