@@ -1,3 +1,10 @@
+## [0.4.2](https://github.com/gambcl/SignalTrader/compare/v0.4.1...v0.4.2) (2023-02-10)
+
+
+### Bug Fixes
+
+* fetch positions via rest api ([01f1f7f](https://github.com/gambcl/SignalTrader/commit/01f1f7febc696bce69a22468203907a267064d15))
+
 ## [0.4.1](https://github.com/gambcl/SignalTrader/compare/v0.4.0...v0.4.1) (2023-02-07)
 
 
