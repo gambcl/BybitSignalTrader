@@ -1,5 +1,8 @@
 using System.Reflection;
 using SignalTrader.Accounts.Services;
+using SignalTrader.Common.Enums;
+using SignalTrader.Common.Extensions;
+using SignalTrader.Positions.Services;
 using SignalTrader.Telegram.Extensions;
 using Telegram.Bot;
 using Telegram.Bot.Exceptions;
@@ -75,24 +78,22 @@ public class TelegramService : ITelegramService, IDisposable
         {
             var parts = new List<string>();
 
-            if (!string.IsNullOrWhiteSpace(detail))
+            if (!string.IsNullOrWhiteSpace(title))
             {
-                // Detail in _italic_
-                parts.Insert(0, $"_{detail.ToTelegramSafeString()}_");
+                // Title in *bold*
+                parts.Add($"*{title.ToTelegramSafeString()}*");
             }
 
             if (!string.IsNullOrWhiteSpace(message))
             {
                 // Plain message
-                string colon = parts.Count > 0 ? ":" : string.Empty;
-                parts.Insert(0, $"{message}{colon}".ToTelegramSafeString());
+                parts.Add(message.ToTelegramSafeString());
             }
 
-            if (!string.IsNullOrWhiteSpace(title))
+            if (!string.IsNullOrWhiteSpace(detail))
             {
-                // Title in *bold*
-                string colon = parts.Count > 0 ? ":" : string.Empty;
-                parts.Insert(0, $"*{title.ToTelegramSafeString()}{colon.ToTelegramSafeString()}*");
+                // Detail in _italic_
+                parts.Add($"_{detail.ToTelegramSafeString()}_");
             }
 
             // Add prefix/suffix emojis.
@@ -159,6 +160,9 @@ public class TelegramService : ITelegramService, IDisposable
                         case "/balances":
                             await HandleBalancesCommand(botClient, update, cancellationToken);
                             break;
+                        case "/positions":
+                            await HandlePositionsCommand(botClient, update, cancellationToken);
+                            break;
                     }
                 }
             }
@@ -186,7 +190,8 @@ public class TelegramService : ITelegramService, IDisposable
     {
         var message = "The following commands are supported:\n" +
                       "/help - Show this message\n" +
-                      "/balances - Show account balances\n";
+                      "/balances - Show account balances\n" +
+                      "/positions - Show open positions\n";
         await botClient.SendTextMessageAsync(_chatId, message.ToTelegramSafeString(), ParseMode.MarkdownV2, cancellationToken:cancellationToken);
     }
 
@@ -199,7 +204,12 @@ public class TelegramService : ITelegramService, IDisposable
             var accounts = await accountsService.GetAccountsAsync();
             if (accounts.Count > 0)
             {
-                foreach (var account in accounts)
+                var orderedAccounts = accounts
+                    .OrderBy(a => a.Name)
+                    .ThenBy(a => a.CreatedUtcMillis)
+                    .ToList();
+                
+                foreach (var account in orderedAccounts)
                 {
                     message += $"{Constants.Emojis.MoneyBag} *{account.Name.ToTelegramSafeString()}*\n";
                     var balances = accountsService.GetBalances(account.Id);
@@ -226,6 +236,52 @@ public class TelegramService : ITelegramService, IDisposable
             else
             {
                 message = "No accounts found!\n".ToTelegramSafeString();
+            }
+        
+            await botClient.SendTextMessageAsync(_chatId, message, ParseMode.MarkdownV2, cancellationToken:cancellationToken);
+        }
+    }
+
+    private async Task HandlePositionsCommand(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    {
+        await using (var scope = _serviceScopeFactory.CreateAsyncScope())
+        {
+            var positionsService = scope.ServiceProvider.GetRequiredService<IPositionsService>();
+            var message = string.Empty;
+            var positionsResult = await positionsService.GetPositionsAsync(status:PositionStatus.Open);
+            if (positionsResult.Success)
+            {
+                if (positionsResult.Positions.Count > 0)
+                {
+                    var orderedPositions = positionsResult.Positions
+                        .OrderBy(p => p.AccountName)
+                        .ThenBy(p => p.QuoteAsset)
+                        .ThenBy(p => p.BaseAsset)
+                        .ThenBy(p => p.CreatedUtcMillis)
+                        .ToList();
+                    
+                    foreach (var position in orderedPositions)
+                    {
+                        var realisedSign = position.RealisedPnl >= 0.0M ? "+" : "-";
+                        var realisedPnlEmoji = PositionsService.DeterminePnlEmoji(position.Status, position.RealisedPnlPercent);
+                        var unrealisedSign = position.UnrealisedPnl >= 0.0M ? "+" : "-";
+                        var unrealisedPnlEmoji = PositionsService.DeterminePnlEmoji(position.Status, position.UnrealisedPnlPercent);
+                        message += $"{position.Direction.ToEmoji()} *{position.AccountName.ToTelegramSafeString()}*\n";
+                        message += $"{position.Direction} position of {position.Quantity} {position.BaseAsset}{position.QuoteAsset} at {position.LeverageMultiplier:N2}x leverage\n".ToTelegramSafeString();
+                        message += ("_" + $"Realised P&L: {realisedSign}{Math.Abs(position.RealisedPnl)} {position.QuoteAsset} ({realisedSign}{Math.Abs(position.RealisedPnlPercent)/100.0M:P2}) {realisedPnlEmoji}".ToTelegramSafeString() + "_\n");
+                        message += ("_" + $"Unrealised P&L: {unrealisedSign}{Math.Abs(position.UnrealisedPnl)} {position.QuoteAsset} ({unrealisedSign}{Math.Abs(position.UnrealisedPnlPercent)/100.0M:P2}) {unrealisedPnlEmoji}".ToTelegramSafeString() + "_\n");
+                        message += ("_" + $"Duration: {PositionsService.FormatDuration(position.CreatedUtcMillis ?? 0L, (position.CompletedUtcMillis.HasValue && position.CompletedUtcMillis > 0.0M ? position.CompletedUtcMillis.Value : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()))}".ToTelegramSafeString() + "_\n");
+                        message += "\n";
+                    }
+                }
+                else
+                {
+                    message = "No open positions found!\n".ToTelegramSafeString();
+                }
+            }
+            else
+            {
+                message = "Failed to fetch open positions!\n".ToTelegramSafeString();
             }
         
             await botClient.SendTextMessageAsync(_chatId, message, ParseMode.MarkdownV2, cancellationToken:cancellationToken);
