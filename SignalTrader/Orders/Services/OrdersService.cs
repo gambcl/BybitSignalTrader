@@ -90,6 +90,7 @@ public class OrdersService : IOrdersService
                     o.AccountId == account.Id &&
                     o.QuoteAsset == quoteAsset &&
                     o.BaseAsset == baseAsset &&
+                    (o.Status == OrderStatus.Created || o.Status == OrderStatus.PartiallyFilled) &&
                     (side == null || (o.Side == side.Value)))
                 .ToListAsync();
 
