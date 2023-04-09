@@ -1,3 +1,10 @@
+## [0.4.5](https://github.com/gambcl/SignalTrader/compare/v0.4.4...v0.4.5) (2023-04-09)
+
+
+### Bug Fixes
+
+* filter by order status when cancelling active orders ([3ce085f](https://github.com/gambcl/SignalTrader/commit/3ce085f84d99705229020564722cf2ae6bb54de4))
+
 ## [0.4.4](https://github.com/gambcl/SignalTrader/compare/v0.4.3...v0.4.4) (2023-02-10)
 
 
