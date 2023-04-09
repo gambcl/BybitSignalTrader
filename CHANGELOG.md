@@ -1,3 +1,11 @@
+## [0.4.6](https://github.com/gambcl/SignalTrader/compare/v0.4.5...v0.4.6) (2023-04-09)
+
+
+### Bug Fixes
+
+* catch and log exceptions thrown by telegram bot client ([2a4549b](https://github.com/gambcl/SignalTrader/commit/2a4549b60620e732dfc77bab391900d88ad832a8))
+* catch and log exceptions thrown when handling telegram updates ([cbe0778](https://github.com/gambcl/SignalTrader/commit/cbe077876b2a06fdcae3d4ab9ce1ca135f2cab62))
+
 ## [0.4.5](https://github.com/gambcl/SignalTrader/compare/v0.4.4...v0.4.5) (2023-04-09)
 
 
