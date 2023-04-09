@@ -76,34 +76,41 @@ public class TelegramService : ITelegramService, IDisposable
     {
         if (_telegramBotClient != null)
         {
-            var parts = new List<string>();
-
-            if (!string.IsNullOrWhiteSpace(title))
+            try
             {
-                // Title in *bold*
-                parts.Add($"*{title.ToTelegramSafeString()}*");
-            }
+                var parts = new List<string>();
 
-            if (!string.IsNullOrWhiteSpace(message))
-            {
-                // Plain message
-                parts.Add(message.ToTelegramSafeString());
-            }
+                if (!string.IsNullOrWhiteSpace(title))
+                {
+                    // Title in *bold*
+                    parts.Add($"*{title.ToTelegramSafeString()}*");
+                }
 
-            if (!string.IsNullOrWhiteSpace(detail))
-            {
-                // Detail in _italic_
-                parts.Add($"_{detail.ToTelegramSafeString()}_");
-            }
+                if (!string.IsNullOrWhiteSpace(message))
+                {
+                    // Plain message
+                    parts.Add(message.ToTelegramSafeString());
+                }
 
-            // Add prefix/suffix emojis.
-            prefixEmoji = string.IsNullOrWhiteSpace(prefixEmoji) ? string.Empty : prefixEmoji + " ";
-            suffixEmoji = string.IsNullOrWhiteSpace(suffixEmoji) ? string.Empty : " " + suffixEmoji;
-            string fullMessage = prefixEmoji + string.Join("\n", parts) + suffixEmoji;
+                if (!string.IsNullOrWhiteSpace(detail))
+                {
+                    // Detail in _italic_
+                    parts.Add($"_{detail.ToTelegramSafeString()}_");
+                }
+
+                // Add prefix/suffix emojis.
+                prefixEmoji = string.IsNullOrWhiteSpace(prefixEmoji) ? string.Empty : prefixEmoji + " ";
+                suffixEmoji = string.IsNullOrWhiteSpace(suffixEmoji) ? string.Empty : " " + suffixEmoji;
+                string fullMessage = prefixEmoji + string.Join("\n", parts) + suffixEmoji;
             
-            if (!string.IsNullOrWhiteSpace(fullMessage))
+                if (!string.IsNullOrWhiteSpace(fullMessage))
+                {
+                    await _telegramBotClient.SendTextMessageAsync(_chatId, fullMessage, ParseMode.MarkdownV2);
+                }
+            }
+            catch (Exception e)
             {
-                await _telegramBotClient.SendTextMessageAsync(_chatId, fullMessage, ParseMode.MarkdownV2);
+                _logger.LogError(e, "Caught Exception in SendMessageNotificationAsync");
             }
         }
     }
@@ -112,10 +119,17 @@ public class TelegramService : ITelegramService, IDisposable
     {
         if (_telegramBotClient != null)
         {
-            var appName = Assembly.GetEntryAssembly()!.GetName().Name;
-            var appVersion = Assembly.GetEntryAssembly()!.GetName().Version;
+            try
+            {
+                var appName = Assembly.GetEntryAssembly()!.GetName().Name;
+                var appVersion = Assembly.GetEntryAssembly()!.GetName().Version;
 
-            await _telegramBotClient.SendTextMessageAsync(_chatId, $"{Constants.Emojis.TrafficLight} *{appName} v{appVersion!.Major}\\.{appVersion.Minor}\\.{appVersion.Build}* started", ParseMode.MarkdownV2);
+                await _telegramBotClient.SendTextMessageAsync(_chatId, $"{Constants.Emojis.TrafficLight} *{appName} v{appVersion!.Major}\\.{appVersion.Minor}\\.{appVersion.Build}* started", ParseMode.MarkdownV2);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Caught Exception in SendStartupNotificationAsync");
+            }
         }
     }
 
@@ -123,7 +137,14 @@ public class TelegramService : ITelegramService, IDisposable
     {
         if (_telegramBotClient != null)
         {
-            await _telegramBotClient.SendTextMessageAsync(_chatId, $"{Constants.Emojis.SatelliteAntenna} Received *{strategyName.ToTelegramSafeString()} '{signalName.ToTelegramSafeString()}'* signal for *{exchange.ToTelegramSafeString()}:{ticker.ToTelegramSafeString()} {interval.ToTelegramSafeString()}*", ParseMode.MarkdownV2);
+            try
+            {
+                await _telegramBotClient.SendTextMessageAsync(_chatId, $"{Constants.Emojis.SatelliteAntenna} Received *{strategyName.ToTelegramSafeString()} '{signalName.ToTelegramSafeString()}'* signal for *{exchange.ToTelegramSafeString()}:{ticker.ToTelegramSafeString()} {interval.ToTelegramSafeString()}*", ParseMode.MarkdownV2);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Caught Exception in SendSignalReceivedNotificationAsync");
+            }
         }
     }
 
