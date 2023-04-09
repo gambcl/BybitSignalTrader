@@ -163,34 +163,41 @@ public class TelegramService : ITelegramService, IDisposable
 
     private async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
     {
-        if (update.Message is null) return;
-
-        // Security check - make sure message is from ourselves.
-        if (update.Message.Chat.Id == _chatId)
+        try
         {
-            if (update.Message.Type == MessageType.Text)
+            if (update.Message is null) return;
+
+            // Security check - make sure message is from ourselves.
+            if (update.Message.Chat.Id == _chatId)
             {
-                var messageText = update.Message.Text;
-                if (!string.IsNullOrWhiteSpace(messageText))
+                if (update.Message.Type == MessageType.Text)
                 {
-                    switch (messageText)
+                    var messageText = update.Message.Text;
+                    if (!string.IsNullOrWhiteSpace(messageText))
                     {
-                        case "/help":
-                            await HandleHelpCommand(botClient, update, cancellationToken);
-                            break;
-                        case "/balances":
-                            await HandleBalancesCommand(botClient, update, cancellationToken);
-                            break;
-                        case "/positions":
-                            await HandlePositionsCommand(botClient, update, cancellationToken);
-                            break;
+                        switch (messageText)
+                        {
+                            case "/help":
+                                await HandleHelpCommand(botClient, update, cancellationToken);
+                                break;
+                            case "/balances":
+                                await HandleBalancesCommand(botClient, update, cancellationToken);
+                                break;
+                            case "/positions":
+                                await HandlePositionsCommand(botClient, update, cancellationToken);
+                                break;
+                        }
                     }
                 }
             }
+            else
+            {
+                await _telegramBotClient!.SendTextMessageAsync(update.Message.Chat.Id, "Unauthorized");
+            }
         }
-        else
+        catch (Exception e)
         {
-            await _telegramBotClient!.SendTextMessageAsync(update.Message.Chat.Id, "Unauthorized");
+            _logger.LogError(e, "Caught Exception in HandleUpdateAsync");
         }
     }
 
