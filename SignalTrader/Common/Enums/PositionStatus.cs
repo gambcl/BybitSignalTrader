@@ -8,5 +8,6 @@ public enum PositionStatus
     Closed,
     StopLossInProgress,
     StopLoss,
+    LiquidatedInProgress,
     Liquidated
 }

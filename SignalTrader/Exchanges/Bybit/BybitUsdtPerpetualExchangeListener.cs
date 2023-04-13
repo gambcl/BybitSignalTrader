@@ -373,10 +373,9 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
                         
                         if (positionUsdPerpetualUpdate.PositionStatus == PositionStatus.Liqidation)
                         {
-                            // TODO: Handle liquidation, change Position status to Liquidated, update PnL.
-                            _logger.LogWarning("Updating position {Exchange}:{Base}{Quote} as liquidated", position.Exchange, position.BaseAsset, position.QuoteAsset);
-                            position.Status = Common.Enums.PositionStatus.Liquidated;
-                            position.CompletedUtcMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                            // Handle liquidation, change Position status to LiquidatedInProgress.
+                            _logger.LogWarning("Updating position {Exchange}:{Base}{Quote} to LiquidatedInProgress", position.Exchange, position.BaseAsset, position.QuoteAsset);
+                            position.Status = Common.Enums.PositionStatus.LiquidatedInProgress;
                             position.UpdatedUtcMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                         }
 
@@ -414,16 +413,77 @@ public class BybitUsdtPerpetualExchangeListener : IBybitUsdtPerpetualExchangeLis
                 return new ExchangeSubscriptionResult(true);
             }
             
+            var accountId = account.Id;
             _logger.LogInformation("Subscribing to OrderUpdates for account {AccountId}", account.Id);
             var bybitSocketClient = new BybitSocketClient(BybitFuturesExchange.BuildBybitSocketClientOptions(account, _configuration));
             var subscriptionResult = await bybitSocketClient.UsdPerpetualStreams.SubscribeToOrderUpdatesAsync(async @event =>
             {
                 using var scope = _serviceScopeFactory.CreateAsyncScope();
+                var signalTraderDbContext = scope.ServiceProvider.GetRequiredService<SignalTraderDbContext>();
+
                 foreach (var orderUpdate in @event.Data)
                 {
                     try
                     {
                         _logger.LogInformation("Received OrderUpdate:\n{OrderUpdate}", JsonSerializer.Serialize(orderUpdate).ToString());
+                        
+                        // Look for OrderUpdates closing a liquidated position.
+                        if (orderUpdate.ReduceOnly && orderUpdate.CloseOnTrigger)
+                        {
+                            // Look for a matching position with LiquidatedInProgress status - try to match as many fields as possible.
+                            var positions = await signalTraderDbContext.Positions
+                                .Where(p => p.AccountId == accountId &&
+                                            p.Exchange == SupportedExchange.BybitUSDTPerpetual &&
+                                            (p.BaseAsset + p.QuoteAsset) == orderUpdate.Symbol &&
+                                            p.Direction == (orderUpdate.Side == OrderSide.Sell ? Direction.Long : Direction.Short) &&
+                                            p.Quantity == orderUpdate.Quantity &&
+                                            p.LiquidationPrice == orderUpdate.Price &&
+                                            p.Status == Common.Enums.PositionStatus.LiquidatedInProgress)
+                                .Include(p => p.Orders)
+                                .Include(p => p.Account)
+                                .ToListAsync();
+
+                            if (positions.Count == 1)
+                            {
+                                var position = positions.Single();
+                                
+                                _logger.LogInformation("Found matching LiquidatedInProgress Position {PositionId} for closing OrderUpdate {OrderId}", position.Id, orderUpdate.Id);
+
+                                // Record the Order that is closing the liquidated position.
+                                var order = new Order()
+                                {
+                                    AccountId = accountId,
+                                    Account = position.Account,
+                                    Exchange = position.Exchange,
+                                    QuoteAsset = position.QuoteAsset,
+                                    BaseAsset = position.BaseAsset,
+                                    ExchangeOrderId = orderUpdate.Id,
+                                    Side = orderUpdate.Side switch
+                                    {
+                                        OrderSide.Buy => Side.Buy,
+                                        OrderSide.Sell => Side.Sell,
+                                        _ => throw new ArgumentOutOfRangeException()
+                                    },
+                                    Type = orderUpdate.Type switch
+                                    {
+                                        OrderType.Limit => Common.Enums.OrderType.Limit,
+                                        OrderType.Market => Common.Enums.OrderType.Market,
+                                        _ => throw new ArgumentOutOfRangeException()
+                                    },
+                                    Price = orderUpdate.Type == OrderType.Limit ? orderUpdate.LastTradePrice : null,
+                                    Quantity = orderUpdate.Quantity,
+                                    ReduceOnly = orderUpdate.ReduceOnly,
+                                    PositionId = position.Id,
+                                    Position = position,
+                                };
+                                signalTraderDbContext.Orders.Add(order);
+                                await signalTraderDbContext.SaveChangesAsync();
+                            }
+                            else if (positions.Count > 1)
+                            {
+                                _logger.LogError("Ambiguous result {Count} when querying for LiquidatedInProgress Position matching OrderUpdate", positions.Count);
+                            }
+                        }
                     
                         // Catch up with processing cached UserTradeUpdates, in case order is now in db.
                         await ProcessUserTradeUpdatesAsync(orderUpdate.Id);

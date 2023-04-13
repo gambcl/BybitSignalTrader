@@ -585,7 +585,8 @@ public class PositionsService : IPositionsService
                                   o.Exchange == position.Exchange &&
                                   o.QuoteAsset == position.QuoteAsset &&
                                   o.BaseAsset == position.BaseAsset &&
-                                  o.Side == exitSide);
+                                  o.Side == exitSide &&
+                                  o.ReduceOnly == true);
                 bool allExitOrdersComplete = true;
                 foreach (var exitOrder in exitOrders)
                 {
@@ -615,7 +616,8 @@ public class PositionsService : IPositionsService
                                   o.Exchange == position.Exchange &&
                                   o.QuoteAsset == position.QuoteAsset &&
                                   o.BaseAsset == position.BaseAsset &&
-                                  o.Side == exitSide);
+                                  o.Side == exitSide &&
+                                  o.ReduceOnly == true);
                 bool allExitOrdersComplete = true;
                 foreach (var exitOrder in exitOrders)
                 {
@@ -629,6 +631,37 @@ public class PositionsService : IPositionsService
                 if (allExitOrdersComplete)
                 {
                     position.Status = PositionStatus.StopLoss;
+                    position.CompletedUtcMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                    statusChanged = true;
+                }
+            }
+            else if (position.Status == PositionStatus.LiquidatedInProgress)
+            {
+                // Options are:
+                // - Move to Liquidated if all exit orders are complete
+                
+                Side exitSide = position.Direction == Direction.Long ? Side.Sell : Side.Buy;
+                
+                var exitOrders = position.Orders
+                    .FindAll(o => o.PositionId == position.Id &&
+                                  o.Exchange == position.Exchange &&
+                                  o.QuoteAsset == position.QuoteAsset &&
+                                  o.BaseAsset == position.BaseAsset &&
+                                  o.Side == exitSide &&
+                                  o.ReduceOnly == true);
+                bool allExitOrdersComplete = true;
+                foreach (var exitOrder in exitOrders)
+                {
+                    if (!exitOrder.IsComplete)
+                    {
+                        allExitOrdersComplete = false;
+                        break;
+                    }
+                }
+
+                if (allExitOrdersComplete)
+                {
+                    position.Status = PositionStatus.Liquidated;
                     position.CompletedUtcMillis = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                     statusChanged = true;
                 }
