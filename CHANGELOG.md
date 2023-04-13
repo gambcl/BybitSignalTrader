@@ -1,3 +1,10 @@
+## [0.4.7](https://github.com/gambcl/SignalTrader/compare/v0.4.6...v0.4.7) (2023-04-13)
+
+
+### Bug Fixes
+
+* handle position liquidations ([288260f](https://github.com/gambcl/SignalTrader/commit/288260fc61a3c1681f1684cc5c73031050aaff03))
+
 ## [0.4.6](https://github.com/gambcl/SignalTrader/compare/v0.4.5...v0.4.6) (2023-04-09)
 
 
